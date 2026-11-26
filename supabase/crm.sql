@@ -34,3 +34,6 @@ alter table public.crm_leads enable row level security;
 drop policy if exists "crm_leads_own" on public.crm_leads;
 create policy "crm_leads_own" on public.crm_leads
   for all using (owner = auth.uid()) with check (owner = auth.uid());
+
+-- Permite que usuários logados acessem a tabela (o RLS acima é quem filtra as linhas)
+grant select, insert, update, delete on public.crm_leads to authenticated;
