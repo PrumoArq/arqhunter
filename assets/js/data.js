@@ -118,3 +118,20 @@ const MOCK_PROSPECTS = [
     ]
   }
 ];
+
+/* Lista curada dos nichos mais comuns de prospecção local (o Google não
+   expõe uma lista pronta de "nichos" — tem tipos técnicos). O usuário também
+   pode digitar qualquer nicho fora desta lista. */
+const NICHOS = [
+  "Academia","Açaí","Advocacia","Auto elétrica","Autoescola","Bar","Barbearia",
+  "Buffet","Cafeteria","Clínica de estética","Clínica médica","Clínica odontológica",
+  "Clínica veterinária","Confeitaria","Construtora","Contabilidade","Corretor de imóveis",
+  "Crossfit","Dedetizadora","Design de interiores","Doceria","Engenharia civil",
+  "Escola de idiomas","Escola infantil","Escritório de arquitetura","Estética automotiva",
+  "Farmácia","Fisioterapia","Floricultura","Fonoaudiologia","Food truck","Fotografia",
+  "Funilaria e pintura","Hamburgueria","Imobiliária","Jardinagem","Joalheria","Lanchonete",
+  "Lava-rápido","Loja de autopeças","Loja de calçados","Loja de roupas","Marcenaria",
+  "Marmoraria","Nutricionista","Oficina mecânica","Ótica","Padaria","Papelaria","Pet shop",
+  "Pizzaria","Psicologia","Restaurante","Salão de beleza","Serralheria","Studio de pilates",
+  "Studio de tatuagem","Studio de yoga","Vidraçaria"
+];

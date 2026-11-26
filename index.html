@@ -65,17 +65,11 @@
           <div class="form__row">
             <label class="field">
               <span class="field__label">Nicho</span>
-              <input class="field__input" name="nicho" list="nichos" placeholder="Ex.: Pet shop, Restaurante, Clínica..." required />
-              <datalist id="nichos">
-                <option value="Pet shop"></option><option value="Restaurante"></option>
-                <option value="Clínica odontológica"></option><option value="Academia"></option>
-                <option value="Salão de beleza"></option><option value="Escritório de arquitetura"></option>
-                <option value="Advocacia"></option><option value="Imobiliária"></option>
-              </datalist>
+              <input class="field__input" name="nicho" autocomplete="off" placeholder="Clique e escolha, ou digite…" required />
             </label>
             <label class="field">
               <span class="field__label">Cidade / região</span>
-              <input class="field__input" name="cidade" placeholder="Ex.: Rio de Janeiro — RJ" />
+              <input class="field__input" name="cidade" autocomplete="off" placeholder="Digite e escolha (ex.: Ribeirão…)" />
             </label>
           </div>
 

@@ -692,6 +692,80 @@ function updateCounts() {
   $("#navCrmCount").textContent = Object.keys(App.crm).length;
 }
 
+/* ============ COMBOBOX (nicho e cidade) ============
+   Clicar no campo abre uma lista; digitar filtra (nicho) ou puxa sugestões
+   do Google (cidade). Dá pra escolher uma opção OU digitar livre. */
+function setupCombo(input, { source, minChars = 0, debounce = 0, caret = false }) {
+  if (!input) return;
+  const field = input.closest(".field") || input.parentElement;
+  field.classList.add("field--combo");
+  if (caret) field.classList.add("field--combo-caret");
+  const pop = document.createElement("div");
+  pop.className = "combo-pop";
+  pop.hidden = true;
+  field.appendChild(pop);
+
+  let items = [];
+  let active = -1;
+
+  function render(list) {
+    items = list || [];
+    active = -1;
+    if (!items.length) { pop.hidden = true; return; }
+    pop.innerHTML = items.map((t, i) => `<div class="combo-opt" data-i="${i}">${t}</div>`).join("");
+    pop.hidden = false;
+  }
+  async function update() {
+    const q = input.value.trim();
+    if (q.length < minChars) { if (minChars === 0) render(await source("")); else pop.hidden = true; return; }
+    render(await source(q));
+  }
+  function pick(i) {
+    if (items[i] == null) return;
+    input.value = items[i];
+    pop.hidden = true;
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  let t;
+  const fire = () => { if (debounce) { clearTimeout(t); t = setTimeout(update, debounce); } else update(); };
+  input.addEventListener("focus", update);
+  input.addEventListener("click", update);
+  input.addEventListener("input", fire);
+  input.addEventListener("blur", () => setTimeout(() => (pop.hidden = true), 140));
+  input.addEventListener("keydown", (e) => {
+    if (pop.hidden) return;
+    const opts = [...pop.children];
+    if (e.key === "ArrowDown") { e.preventDefault(); active = Math.min(active + 1, opts.length - 1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); active = Math.max(active - 1, 0); }
+    else if (e.key === "Enter" && active >= 0) { e.preventDefault(); pick(active); return; }
+    else if (e.key === "Escape") { pop.hidden = true; return; }
+    else return;
+    opts.forEach((o, i) => o.classList.toggle("is-active", i === active));
+    if (opts[active]) opts[active].scrollIntoView({ block: "nearest" });
+  });
+  pop.addEventListener("mousedown", (e) => {        // mousedown p/ vir antes do blur
+    const opt = e.target.closest(".combo-opt");
+    if (!opt) return;
+    e.preventDefault();
+    pick(+opt.dataset.i);
+  });
+}
+
+/* fonte de sugestões de cidade: nosso back-end -> Google Places Autocomplete */
+async function cidadeSource(q) {
+  if (q.length < 3) return [];
+  try {
+    const r = await fetch("/api/autocomplete", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ q })
+    });
+    if (!r.ok) return [];
+    const d = await r.json();
+    return d.cidades || [];
+  } catch { return []; }
+}
+
 /* ============ BOOT ============ */
 document.addEventListener("DOMContentLoaded", () => {
   // nav
@@ -709,6 +783,14 @@ document.addEventListener("DOMContentLoaded", () => {
       filtro: fd.get("filtro")
     });
   });
+
+  // comboboxes do formulário de busca
+  const semAcento = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  setupCombo($('input[name="nicho"]'), {
+    minChars: 0, caret: true,
+    source: (q) => { const ql = semAcento(q.trim()); return ql ? NICHOS.filter(n => semAcento(n).includes(ql)) : NICHOS; }
+  });
+  setupCombo($('input[name="cidade"]'), { minChars: 3, debounce: 300, source: cidadeSource });
 
   // filtros prospects
   $$(".filter").forEach(f => f.addEventListener("click", () => {
