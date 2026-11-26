@@ -21,10 +21,18 @@ const App = {
    salvo só no pipeline local (o board que você vê). */
 const CRM_API = { enabled: false, endpoint: "/api/crm-lead" };
 
+/* Busca real: o front chama nosso back-end /api/busca, que fala com o Google
+   Places (a chave fica só no servidor). Se o back-end não responder (ex.: rodando
+   local sem a chave), cai no modo demonstração com os dados de exemplo. */
+const SEARCH_API = { endpoint: "/api/busca" };
+
 /* ---------- helpers ---------- */
 const $  = (sel, el = document) => el.querySelector(sel);
 const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
-const scoreClass = (s) => (s < 40 ? "bad" : s < 70 ? "warn" : "good");
+const scoreClass = (s) => (typeof s !== "number" ? "na" : s < 40 ? "bad" : s < 70 ? "warn" : "good");
+const hasScore = (p) => typeof p.siteScore === "number";   // site já medido (PageSpeed)?
+const notaStr  = (p) => (typeof p.notaGoogle === "number") ? p.notaGoogle.toFixed(1) : null;
+const siteUrl  = (p) => p.site ? (/^https?:\/\//.test(p.site) ? p.site : "https://" + p.site) : null;
 
 function toast(msg) {
   const t = $("#toast");
@@ -146,7 +154,7 @@ function renderDashboard() {
           <div class="mini-list__name">${p.nome}</div>
           <div class="mini-list__cat">${p.categoria} · ${(p.cidade || "").split("—")[0].trim()}</div>
         </div>
-        <span class="mini-list__meta" style="color:${p.site ? "var(--warn)" : "var(--bad)"}">${p.site ? p.siteScore + "/100" : "sem site"}</span>
+        <span class="mini-list__meta" style="color:${p.site ? "var(--warn)" : "var(--bad)"}">${p.site ? (hasScore(p) ? p.siteScore + "/100" : "a medir") : "sem site"}</span>
       </div>`).join("");
 
   root.innerHTML = `
@@ -195,41 +203,61 @@ const SEARCH_STEPS = [
   "Separando quem precisa de você…"
 ];
 
-function runSearch(params) {
-  /* TODO BACK-END:
-     Substituir este bloco por uma chamada real, ex.:
-       const res = await fetch("/api/busca", { method:"POST", body: JSON.stringify(params) });
-       App.prospects = await res.json();
-     O back-end é quem fala com Google Maps / Instagram / PageSpeed. */
+async function runSearch(params) {
   $("#searchHint").hidden = true;
   const box = $("#searching");
   box.hidden = false;
   const btn = $("#searchBtn");
   btn.disabled = true;
 
+  // animação das etapas enquanto a busca acontece
   let i = 0;
   $("#searchingText").textContent = SEARCH_STEPS[0];
   const timer = setInterval(() => {
-    i++;
-    if (i < SEARCH_STEPS.length) {
-      $("#searchingText").textContent = SEARCH_STEPS[i];
-    } else {
-      clearInterval(timer);
-      box.hidden = true;
-      btn.disabled = false;
-
-      // filtra o mock conforme os parâmetros
-      let results = MOCK_PROSPECTS.filter(p => params.fontes.includes(p.fonte));
-      if (params.filtro === "sem-site") results = results.filter(p => !p.site);
-      else if (params.filtro === "precisa") results = results.filter(p => !p.site || p.siteScore < 70);
-
-      App.prospects = results.map(p => ({ ...p, nicho: params.nicho, cidade: params.cidade || p.cidade }));
-      updateCounts();
-      const scope = { brasil: "Brasil inteiro", pais: "outro país" }[params.abrangencia] || (params.cidade || "sua região");
-      toast(`${App.prospects.length} negócios · ${scope}`);
-      setView("prospects");
-    }
+    i = (i + 1) % SEARCH_STEPS.length;
+    $("#searchingText").textContent = SEARCH_STEPS[i];
   }, 650);
+
+  let prospects = [];
+  let usouDemo = false;
+
+  try {
+    // busca REAL: nosso back-end consulta o Google Places (chave fica no servidor)
+    const res = await fetch(SEARCH_API.endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nicho: params.nicho,
+        cidade: params.cidade,
+        filtro: params.filtro,
+        fontes: params.fontes,
+        abrangencia: params.abrangencia
+      })
+    });
+    if (!res.ok) throw new Error("backend respondeu " + res.status);
+    const data = await res.json();
+    prospects = (data.prospects || []).map(p => ({ ...p, nicho: params.nicho }));
+  } catch (err) {
+    // sem back-end/chave (ex.: rodando local) → modo demonstração com os exemplos
+    console.warn("Busca real indisponível, usando demonstração:", err);
+    usouDemo = true;
+    let results = MOCK_PROSPECTS.filter(p => params.fontes.includes(p.fonte));
+    if (params.filtro === "sem-site") results = results.filter(p => !p.site);
+    else if (params.filtro === "precisa") results = results.filter(p => !p.site || p.siteScore < 70);
+    prospects = results.map(p => ({ ...p, nicho: params.nicho, cidade: params.cidade || p.cidade }));
+  }
+
+  clearInterval(timer);
+  box.hidden = true;
+  btn.disabled = false;
+
+  App.prospects = prospects;
+  updateCounts();
+  const scope = { brasil: "Brasil inteiro", pais: "outro país" }[params.abrangencia] || (params.cidade || "sua região");
+  toast(usouDemo
+    ? `Modo demonstração · ${App.prospects.length} negócios`
+    : `${App.prospects.length} negócios · ${scope}`);
+  setView("prospects");
 }
 
 /* ============ PROSPECTS ============ */
@@ -261,7 +289,7 @@ function renderProspects() {
       summary.innerHTML = `
         <span class="rs__item"><b>${all.length}</b> negócios</span>
         <span class="rs__item"><b>${comTel}</b> com telefone</span>
-        <span class="rs__item rs__item--warn"><b>${refazer}</b> com site pra refazer</span>
+        <span class="rs__item rs__item--warn"><b>${refazer}</b> com site</span>
         <span class="rs__item rs__item--bad"><b>${semSite}</b> sem site</span>`;
     }
   }
@@ -273,12 +301,22 @@ function renderProspects() {
 
 function cardProspect(p) {
   const inCrm = !!App.crm[p.id];
-  const siteTag = p.site
-    ? `<span class="tag tag--warn">Site ruim</span>`
-    : `<span class="tag tag--bad">Sem site</span>`;
+  // sem site = oportunidade clara; com site = "a medir" até rodar o PageSpeed
+  const siteTag = !p.site
+    ? `<span class="tag tag--bad">Sem site</span>`
+    : (hasScore(p)
+        ? `<span class="tag tag--warn">Site ruim</span>`
+        : `<span class="tag tag--src">Com site</span>`);
   const srcTag = `<span class="tag tag--src">${FONTES[p.fonte] || "Maps"}</span>`;
   const crmTag = inCrm ? `<span class="tag tag--good">No CRM</span>` : "";
-  const sc = scoreClass(p.siteScore);
+
+  // bloco do score: número (medido) · "–" + "sem site" · "–" + "a medir"
+  const sc = !p.site ? "bad" : (hasScore(p) ? scoreClass(p.siteScore) : "na");
+  const scoreNum = (p.site && hasScore(p)) ? p.siteScore : "–";
+  const scoreLbl = !p.site ? "sem site" : (hasScore(p) ? "site" : "a medir");
+
+  const nota = notaStr(p);
+  const avalTxt = nota ? `★ ${nota} · ${p.avaliacoes} aval.` : (p.avaliacoes ? `${p.avaliacoes} aval.` : "sem avaliações");
 
   return `
   <article class="prospect" data-id="${p.id}">
@@ -286,15 +324,15 @@ function cardProspect(p) {
       <div class="prospect__name">${p.nome} ${siteTag} ${srcTag} ${crmTag}</div>
       <div class="prospect__meta">
         <span>${p.categoria}</span>
-        <span>★ ${p.notaGoogle.toFixed(1)} · ${p.avaliacoes} aval.</span>
-        <span>${p.telefone}</span>
+        <span>${avalTxt}</span>
+        <span>${p.telefone || "sem telefone"}</span>
         <span>${p.site || "sem site"}</span>
       </div>
     </div>
     <div class="prospect__right">
       <div class="score score--${sc}">
-        <div class="score__num">${p.site ? p.siteScore : "—"}</div>
-        <div class="score__label">site</div>
+        <div class="score__num">${scoreNum}</div>
+        <div class="score__label">${scoreLbl}</div>
       </div>
     </div>
   </article>`;
@@ -303,7 +341,8 @@ function cardProspect(p) {
 /* Projeção "depois do ARQHunter" (placeholder — vira dado real do back-end
    quando a gente medir o site atual E o site novo que você criar). */
 function projectedScore(p) {
-  return p.site ? Math.min(97, p.siteScore + 60) : 95;
+  if (!p.site) return 95;                 // sem site → site novo nasce forte
+  return hasScore(p) ? Math.min(97, p.siteScore + 60) : null; // null = ainda não medido
 }
 function improvedValue(nome) {
   const map = {
@@ -330,17 +369,46 @@ function openDrawer(id) {
   const p = App.prospects.find(x => x.id === id);
   if (!p) return;
 
+  const temDiag = Array.isArray(p.diagnostico) && p.diagnostico.length > 0;
   const proj = projectedScore(p);
-  const now = p.site ? p.siteScore : 0;
-  const delta = p.site ? proj - now : proj;
+  const nota = notaStr(p);
+  const site = siteUrl(p);
 
-  const diagRows = p.diagnostico.map(d => `
-    <div class="diag__row">
-      <span class="diag__dot diag__dot--${d.status}"></span>
-      <span class="diag__name">${d.nome}</span>
-      <span class="diag__val">${d.valor}</span>
-      <span class="diag__after">→ ${improvedValue(d.nome)}</span>
-    </div>`).join("");
+  let diagnosticoHtml;
+  if (temDiag) {
+    const now = p.site ? p.siteScore : 0;
+    const delta = (proj != null) ? proj - now : null;
+    const diagRows = p.diagnostico.map(d => `
+      <div class="diag__row">
+        <span class="diag__dot diag__dot--${d.status}"></span>
+        <span class="diag__name">${d.nome}</span>
+        <span class="diag__val">${d.valor}</span>
+        <span class="diag__after">→ ${improvedValue(d.nome)}</span>
+      </div>`).join("");
+    diagnosticoHtml = `
+      <div class="section-label">Diagnóstico — hoje × depois</div>
+      <div class="compare">
+        <div class="compare__col compare__col--now">
+          <div class="compare__cap">Site hoje</div>
+          <div class="compare__score">${p.site ? now : "—"}<small>/100</small></div>
+        </div>
+        <div class="compare__col compare__col--after">
+          <div class="compare__cap">Com o ARQHunter</div>
+          <div class="compare__score">${proj}<small>/100</small></div>
+          ${delta != null ? `<div class="compare__delta">▲ +${delta} pts</div>` : ""}
+        </div>
+      </div>
+      <div class="diag">${diagRows}</div>`;
+  } else {
+    // dados reais do Google: o site ainda não foi medido (PageSpeed = próxima etapa)
+    diagnosticoHtml = `
+      <div class="section-label">Diagnóstico do site</div>
+      <div class="diag-pending">
+        ${p.site
+          ? `Site encontrado: <a href="${site}" target="_blank" rel="noopener">${p.site.replace(/^https?:\/\//, "")}</a>.<br>A medição de velocidade, SEO e mobile (o “hoje × depois”) entra na próxima etapa.`
+          : `Este negócio <b>não tem site</b> — oportunidade clara pra criar um do zero. 🎯`}
+      </div>`;
+  }
 
   const stage = App.crm[id]?.stage || "";
   const stageOptions = CRM_STAGES.map(s =>
@@ -352,24 +420,12 @@ function openDrawer(id) {
       <button class="drawer__close" id="drawerClose">×</button>
     </div>
     <div class="drawer__meta">
-      <span>${p.categoria} · ${p.cidade}</span>
-      <span>★ ${p.notaGoogle.toFixed(1)} no Google · ${p.telefone}</span>
-      <span>${p.site ? `🌐 ${p.site}` : "Sem site"} · ${p.instagram}</span>
+      <span>${p.categoria}${p.cidade ? " · " + p.cidade : ""}</span>
+      <span>${nota ? `★ ${nota} no Google` : "sem nota no Google"} · ${p.telefone || "sem telefone"}</span>
+      <span>${p.site ? `🌐 ${p.site}` : "Sem site"}${p.instagram ? " · " + p.instagram : ""}</span>
     </div>
 
-    <div class="section-label">Diagnóstico — hoje × depois</div>
-    <div class="compare">
-      <div class="compare__col compare__col--now">
-        <div class="compare__cap">Site hoje</div>
-        <div class="compare__score">${p.site ? now : "—"}<small>/100</small></div>
-      </div>
-      <div class="compare__col compare__col--after">
-        <div class="compare__cap">Com o ARQHunter</div>
-        <div class="compare__score">${proj}<small>/100</small></div>
-        <div class="compare__delta">▲ +${delta} pts</div>
-      </div>
-    </div>
-    <div class="diag">${diagRows}</div>
+    ${diagnosticoHtml}
 
     <div class="section-label">Abordagem gerada</div>
     <textarea class="message" id="messageBox">${generateMessage(p)}</textarea>
@@ -381,8 +437,9 @@ function openDrawer(id) {
     <div class="section-label">Contato</div>
     <div class="drawer__actions">
       ${p.site ? `<button class="btn btn--sm" id="openSiteBtn">Abrir site ↗</button>` : ""}
-      <button class="btn btn--sm btn--brand" id="waBtn">WhatsApp ↗</button>
-      <button class="btn btn--sm" id="igBtn">Instagram ↗</button>
+      ${p.whatsapp ? `<button class="btn btn--sm btn--brand" id="waBtn">WhatsApp ↗</button>` : ""}
+      ${p.instagram ? `<button class="btn btn--sm" id="igBtn">Instagram ↗</button>` : ""}
+      ${p.mapsUrl ? `<button class="btn btn--sm btn--ghost" id="mapsBtn">Ver no Maps ↗</button>` : ""}
     </div>
 
     <div class="section-label">CRM</div>
@@ -409,13 +466,14 @@ function openDrawer(id) {
     $("#messageBox").value = generateMessage(p, true);
   });
   /* Ações de contato. TODO BACK-END: registrar no CRM que o contato foi aberto. */
-  $("#openSiteBtn")?.addEventListener("click", () => window.open("https://" + p.site, "_blank"));
-  $("#waBtn").addEventListener("click", () => {
+  $("#openSiteBtn")?.addEventListener("click", () => window.open(siteUrl(p), "_blank"));
+  $("#waBtn")?.addEventListener("click", () => {
     const msg = encodeURIComponent($("#messageBox").value);
     window.open(`https://wa.me/${p.whatsapp}?text=${msg}`, "_blank");
   });
-  $("#igBtn").addEventListener("click", () =>
+  $("#igBtn")?.addEventListener("click", () =>
     window.open("https://instagram.com/" + p.instagram.replace("@", ""), "_blank"));
+  $("#mapsBtn")?.addEventListener("click", () => window.open(p.mapsUrl, "_blank"));
   $("#toCrmBtn").addEventListener("click", () => {
     const st = $("#stageSelect").value || "novo";
     addToCrm(p, st);
@@ -436,9 +494,12 @@ function generateMessage(p, variant = false) {
        const r = await fetch("/api/abordagem", { method:"POST", body: JSON.stringify(p) });
        return (await r.json()).mensagem;
      Abaixo, só um texto montado com os dados do diagnóstico. */
+  const pontos = (p.diagnostico || []).filter(d => d.status !== "good").map(d => d.nome.toLowerCase()).slice(0, 2).join(" e ");
   const problema = !p.site
     ? "não achei um site de vocês — hoje quem procura no Google acaba indo pro concorrente que tem"
-    : `dei uma olhada no site de vocês e encontrei alguns pontos que estão custando clientes (${p.diagnostico.filter(d => d.status !== "good").map(d => d.nome.toLowerCase()).slice(0, 2).join(" e ")})`;
+    : (pontos
+        ? `dei uma olhada no site de vocês e encontrei alguns pontos que estão custando clientes (${pontos})`
+        : "achei o site de vocês e acho que dá pra deixar ele bem mais forte — mais rápido, aparecendo melhor no Google e redondo no celular");
 
   const aberturas = [
     `Oi! Encontrei a ${p.nome} aqui no ${FONTES[p.fonte] === "Instagram" ? "Instagram" : "Google"} e me chamou atenção.`,
@@ -448,7 +509,7 @@ function generateMessage(p, variant = false) {
 
   // ângulo das avaliações (igual ao MIRA): prova social que o site não mostra
   const reviews = p.avaliacoes >= 100
-    ? `\n\nVocês têm ${p.avaliacoes} avaliações (${p.notaGoogle.toFixed(1)}★) no Google — mas o site não conta nada dessa história.`
+    ? `\n\nVocês têm ${p.avaliacoes} avaliações${notaStr(p) ? ` (${notaStr(p)}★)` : ""} no Google — mas o site não conta nada dessa história.`
     : "";
 
   return `${abertura}
@@ -472,10 +533,10 @@ function buildLeadPayload(p, stage) {
     company: p.nome,
     notes: [
       "Origem: ARQHunter",
-      `${p.categoria} · ${p.cidade}`,
-      `Site: ${p.site || "sem site"}${p.site ? ` (score ${p.siteScore}/100)` : ""}`,
-      `Instagram: ${p.instagram}`,
-      `Avaliações: ${p.avaliacoes} (${p.notaGoogle.toFixed(1)}★)`,
+      `${p.categoria}${p.cidade ? " · " + p.cidade : ""}`,
+      `Site: ${p.site || "sem site"}${(p.site && hasScore(p)) ? ` (score ${p.siteScore}/100)` : ""}`,
+      p.instagram ? `Instagram: ${p.instagram}` : "",
+      `Avaliações: ${p.avaliacoes}${notaStr(p) ? ` (${notaStr(p)}★)` : ""}`,
       etapa ? `Etapa: ${etapa}` : ""
     ].filter(Boolean).join(" · "),
     source: "ARQHunter"
@@ -584,7 +645,7 @@ function cardCrm(p) {
     <div class="card__meta">
       <span>${p.categoria}</span>
       <span>·</span>
-      <span>${p.site ? p.siteScore + "/100" : "sem site"}</span>
+      <span>${p.site ? (hasScore(p) ? p.siteScore + "/100" : "a medir") : "sem site"}</span>
     </div>
   </div>`;
 }

@@ -447,3 +447,14 @@ body.is-locked .app { display: none; }
 /* estado vazio dos cards do Painel (quando ainda não há dados reais) */
 .dash-empty { color: var(--text-3); font-size: 13.5px; line-height: 1.5; padding: 14px 2px 6px; }
 .dash-empty b { color: var(--text-2); }
+
+/* score "a medir" (site encontrado mas ainda não diagnosticado via PageSpeed) */
+.score--na .score__num { color: var(--text-3); }
+
+/* painel de diagnóstico pendente (dados reais, antes da medição do site) */
+.diag-pending {
+  background: var(--surface-2); border: 1px dashed var(--border-2);
+  border-radius: var(--radius-md); padding: 16px 16px; color: var(--text-2);
+  font-size: 14px; line-height: 1.55;
+}
+.diag-pending a { color: var(--indigo); font-weight: 600; }
