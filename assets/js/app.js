@@ -412,7 +412,7 @@ function openDrawer(id) {
       <div class="section-label">Diagnóstico do site</div>
       <div class="diag-pending">
         ${p.site
-          ? `Site encontrado: <a href="${site}" target="_blank" rel="noopener">${p.site.replace(/^https?:\/\//, "")}</a>.<br>A medição de velocidade, SEO e mobile (o “hoje × depois”) entra na próxima etapa.`
+          ? `Site encontrado: <a href="${site}" target="_blank" rel="noopener">${p.site.replace(/^https?:\/\//, "")}</a>.<br>Meça agora pra ver o score real e o “hoje × depois”.<div style="margin-top:12px"><button class="btn btn--sm btn--brand" id="medirBtn">⚡ Medir site (~20s)</button></div>`
           : (fraco
               ? `Este negócio <b>não tem site de verdade</b> — só um link (<a href="${p.siteFraco}" target="_blank" rel="noopener">${p.siteFraco.replace(/^https?:\/\//, "").slice(0, 40)}…</a>). Oportunidade clara pra criar um site profissional. 🎯`
               : `Este negócio <b>não tem site</b> — oportunidade clara pra criar um do zero. 🎯`)}
@@ -476,6 +476,31 @@ function openDrawer(id) {
   });
   /* Ações de contato. TODO BACK-END: registrar no CRM que o contato foi aberto. */
   $("#openSiteBtn")?.addEventListener("click", () => window.open(siteUrl(p), "_blank"));
+  $("#medirBtn")?.addEventListener("click", async () => {
+    const btn = $("#medirBtn");
+    btn.disabled = true;
+    btn.textContent = "Medindo o site… (~20s)";
+    try {
+      const r = await fetch("/api/medir", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: p.site })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "falhou");
+      p.siteScore = d.siteScore;
+      p.diagnostico = Array.isArray(d.diagnostico) ? d.diagnostico : [];
+      // se já está no CRM, salva a medição junto (persiste no Supabase)
+      if (App.crm[p.id]) { App.crm[p.id].prospect = p; crmSave(App.crm[p.id]); }
+      renderProspects();
+      openDrawer(p.id);                 // re-renderiza já com o "hoje × depois" real
+      toast(`Site medido: ${d.siteScore}/100`);
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = "⚡ Medir site (~20s)";
+      toast("Não consegui medir agora. Tente de novo em instantes.");
+      console.warn("medir:", e.message || e);
+    }
+  });
   $("#waBtn")?.addEventListener("click", () => {
     const msg = encodeURIComponent($("#messageBox").value);
     window.open(`https://wa.me/${p.whatsapp}?text=${msg}`, "_blank");
