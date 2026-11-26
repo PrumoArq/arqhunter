@@ -443,3 +443,7 @@ body.is-locked .app { display: none; }
 
 /* garante que o atributo hidden sempre esconde (evita conflito com display:block/flex) */
 [hidden] { display: none !important; }
+
+/* estado vazio dos cards do Painel (quando ainda não há dados reais) */
+.dash-empty { color: var(--text-3); font-size: 13.5px; line-height: 1.5; padding: 14px 2px 6px; }
+.dash-empty b { color: var(--text-2); }

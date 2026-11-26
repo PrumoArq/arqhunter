@@ -1,0 +1,16 @@
+# sistema (macOS)
+.DS_Store
+
+# dependências / build
+node_modules/
+
+# Vercel
+.vercel/
+
+# variáveis de ambiente — SEGREDOS, nunca versionar
+.env
+.env.*
+*.local
+
+# logs
+*.log

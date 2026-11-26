@@ -89,46 +89,65 @@ function renderDashboard() {
   const root = $("#dashRoot");
   if (!root) return;
 
-  // métricas demonstrativas
+  /* Métricas REAIS, a partir do estado atual do app.
+     Começa zerado e vai preenchendo conforme você busca e move no CRM.
+     (Em memória por enquanto: reinicia ao recarregar, até ter persistência.) */
+  const prospectsWeek = App.prospects.length;
+  const crmList = Object.values(App.crm);
+  const noCrm = crmList.length;
+
+  const c = { novo:0, diagnostico:0, abordado:0, conversa:0, followup:0, fechado:0 };
+  crmList.forEach(e => { if (c[e.stage] != null) c[e.stage]++; });
+
+  const contatados  = c.abordado + c.conversa + c.followup + c.fechado;
+  const responderam = c.conversa + c.followup + c.fechado;
+  const pct = (part, whole) => whole ? Math.round(part / whole * 100) + "%" : "—";
+  const taxaResposta    = pct(responderam, contatados);
+  const taxaConvertidos = pct(c.fechado, noCrm);
+
+  const flat = [1,1,1,1,1,1,1]; // sem histórico ainda → linha neutra (decorativa)
   const stats = [
-    { label: "Prospects na semana", num: "128", delta: "+12%", up: true, chart: svgSpark([30,45,38,60,52,70,86], "#fff"),     box: "dark" },
-    { label: "No CRM",              num: "54",  delta: "+8%",  up: true, chart: svgBars([8,12,9,14,11,16,18], "#16d1b4"),      box: "mint" },
-    { label: "Taxa de resposta",    num: "37%", delta: "+4%",  up: true, chart: svgArea([24,28,26,31,30,34,37], "#6366f1"),    box: "blue" },
-    { label: "Taxa de convertidos", num: "14%", delta: "+3%",  up: true, chart: svgSpark([8,9,10,11,12,13,14], "#16d1b4"),     box: "plain" }
+    { label: "Prospects na semana", num: String(prospectsWeek), chart: svgSpark(flat, "#fff"),   box: "dark"  },
+    { label: "No CRM",              num: String(noCrm),         chart: svgSpark(flat, "#16d1b4"), box: "mint"  },
+    { label: "Taxa de resposta",    num: taxaResposta,          chart: svgSpark(flat, "#6366f1"), box: "blue"  },
+    { label: "Taxa de convertidos", num: taxaConvertidos,       chart: svgSpark(flat, "#16d1b4"), box: "plain" }
   ];
   const statCards = stats.map(s => `
     <div class="stat">
       <div class="stat__top"><div class="stat__icon">◴</div><div class="stat__label">${s.label}</div></div>
       <div class="stat__row2">
         <div class="stat__num">${s.num}</div>
-        <div class="stat__delta stat__delta--${s.up ? "up" : "down"}">${s.delta}</div>
       </div>
       <div class="stat__chart stat__chart--${s.box}">${s.chart}</div>
     </div>`).join("");
 
-  // funil do pipeline (demo)
+  // funil do pipeline (real)
   const pipe = [
-    { label: "Novos", v: 32 }, { label: "Diagnosticados", v: 24 }, { label: "Abordados", v: 18 },
-    { label: "Em conversa", v: 12 }, { label: "Follow-up", v: 7 }, { label: "Fechados", v: 5 }
+    { label: "Novos", v: c.novo }, { label: "Diagnosticados", v: c.diagnostico }, { label: "Abordados", v: c.abordado },
+    { label: "Em conversa", v: c.conversa }, { label: "Follow-up", v: c.followup }, { label: "Fechados", v: c.fechado }
   ];
-  const pipeMax = Math.max(...pipe.map(p => p.v));
-  const pipeRows = pipe.map(p => `
-    <div class="pipe__row">
-      <span class="pipe__label">${p.label}</span>
-      <span class="pipe__bar"><span style="width:${(p.v / pipeMax * 100).toFixed(0)}%"></span></span>
-      <span class="pipe__val">${p.v}</span>
-    </div>`).join("");
+  const pipeMax = Math.max(1, ...pipe.map(p => p.v));
+  const pipeInner = noCrm === 0
+    ? `<div class="dash-empty">Seu funil aparece aqui quando você mandar prospects pro CRM.</div>`
+    : pipe.map(p => `
+      <div class="pipe__row">
+        <span class="pipe__label">${p.label}</span>
+        <span class="pipe__bar"><span style="width:${(p.v / pipeMax * 100).toFixed(0)}%"></span></span>
+        <span class="pipe__val">${p.v}</span>
+      </div>`).join("");
 
-  // últimos prospects (do mock)
-  const recent = MOCK_PROSPECTS.slice(0, 5).map(p => `
-    <div class="mini-list__row">
-      <span class="mini-list__dot diag__dot--${p.site ? "warn" : "bad"}"></span>
-      <div>
-        <div class="mini-list__name">${p.nome}</div>
-        <div class="mini-list__cat">${p.categoria} · ${p.cidade.split("—")[0].trim()}</div>
-      </div>
-      <span class="mini-list__meta" style="color:${p.site ? "var(--warn)" : "var(--bad)"}">${p.site ? p.siteScore + "/100" : "sem site"}</span>
-    </div>`).join("");
+  // últimos prospects (reais, da busca atual)
+  const recentInner = prospectsWeek === 0
+    ? `<div class="dash-empty">Nenhum prospect ainda. Rode uma busca em <b>Nova busca</b>.</div>`
+    : App.prospects.slice(0, 5).map(p => `
+      <div class="mini-list__row">
+        <span class="mini-list__dot diag__dot--${p.site ? "warn" : "bad"}"></span>
+        <div>
+          <div class="mini-list__name">${p.nome}</div>
+          <div class="mini-list__cat">${p.categoria} · ${(p.cidade || "").split("—")[0].trim()}</div>
+        </div>
+        <span class="mini-list__meta" style="color:${p.site ? "var(--warn)" : "var(--bad)"}">${p.site ? p.siteScore + "/100" : "sem site"}</span>
+      </div>`).join("");
 
   root.innerHTML = `
     <div class="stat-row">${statCards}</div>
@@ -137,13 +156,12 @@ function renderDashboard() {
       <div class="dash-card">
         <div class="dash-card__head">
           <span class="dash-card__title">Prospecções — últimos 7 dias</span>
-          <span class="dash-card__hint">346 no total</span>
         </div>
-        <div class="barchart">${svgWeekChart([18,24,20,32,28,40,52], ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"])}</div>
+        <div class="dash-empty">Sua atividade dos últimos 7 dias aparece aqui conforme você usar o ARQHunter.</div>
       </div>
       <div class="dash-card">
         <div class="dash-card__head"><span class="dash-card__title">Funil do pipeline</span></div>
-        <div class="pipe">${pipeRows}</div>
+        <div class="pipe">${pipeInner}</div>
       </div>
     </div>
 
@@ -153,7 +171,7 @@ function renderDashboard() {
           <span class="dash-card__title">Últimos prospects</span>
           <span class="dash-card__hint" id="dashSeeAll" style="cursor:pointer;color:var(--indigo)">ver todos ↗</span>
         </div>
-        <div class="mini-list">${recent}</div>
+        <div class="mini-list">${recentInner}</div>
       </div>
       <div class="cta-card">
         <div class="cta-card__title">Rode a busca do dia</div>
@@ -517,15 +535,21 @@ function addToCrm(p, stage) {
 }
 
 function renderBoard() {
-  // resumo de métricas no topo (No CRM é real; os demais são demonstrativos)
+  // resumo de métricas no topo (reais, a partir do estado atual)
   const crmStats = $("#crmStats");
   if (crmStats) {
-    const noCrm = Object.keys(App.crm).length;
+    const crmList = Object.values(App.crm);
+    const noCrm = crmList.length;
+    const c = { novo:0, diagnostico:0, abordado:0, conversa:0, followup:0, fechado:0 };
+    crmList.forEach(e => { if (c[e.stage] != null) c[e.stage]++; });
+    const contatados  = c.abordado + c.conversa + c.followup + c.fechado;
+    const responderam = c.conversa + c.followup + c.fechado;
+    const pct = (part, whole) => whole ? Math.round(part / whole * 100) + "%" : "—";
     const cards = [
-      { label: "Prospects na semana", num: "128" },
+      { label: "Prospects na semana", num: String(App.prospects.length) },
       { label: "No CRM",              num: String(noCrm) },
-      { label: "Taxa de resposta",    num: "37%" },
-      { label: "Taxa de convertidos", num: "14%" }
+      { label: "Taxa de resposta",    num: pct(responderam, contatados) },
+      { label: "Taxa de convertidos", num: pct(c.fechado, noCrm) }
     ];
     crmStats.innerHTML = cards.map(c => `
       <div class="crm-stat">
