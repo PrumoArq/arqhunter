@@ -346,8 +346,9 @@ function cardProspect(p) {
 /* Projeção "depois do ARQHunter" (placeholder — vira dado real do back-end
    quando a gente medir o site atual E o site novo que você criar). */
 function projectedScore(p) {
+  if (typeof p.previewScore === "number") return p.previewScore; // MEDIDO (site novo real)
   if (!p.site) return 95;                 // sem site → site novo nasce forte
-  return hasScore(p) ? Math.min(97, p.siteScore + 60) : null; // null = ainda não medido
+  return hasScore(p) ? Math.min(97, p.siteScore + 60) : null; // estimativa até medir
 }
 function improvedValue(nome) {
   const map = {
@@ -399,7 +400,7 @@ function openDrawer(id) {
           <div class="compare__score">${p.site ? now : "—"}<small>/100</small></div>
         </div>
         <div class="compare__col compare__col--after">
-          <div class="compare__cap">Com o ARQHunter</div>
+          <div class="compare__cap">Com o ARQHunter ${typeof p.previewScore === "number" ? "(medido)" : "(estimado)"}</div>
           <div class="compare__score">${proj}<small>/100</small></div>
           ${delta != null ? `<div class="compare__delta">▲ +${delta} pts</div>` : ""}
         </div>
@@ -462,6 +463,20 @@ function openDrawer(id) {
       ${p.refImageUrl ? `<a href="${p.refImageUrl}" target="_blank" rel="noopener"><img src="${p.refImageUrl}" class="siteref__thumb" alt="referência" /></a>` : ""}
       <button class="btn btn--sm btn--brand btn--block" id="refSaveBtn">Salvar referência</button>
       <p class="siteref__hint">Fica salvo no negócio (entra no seu CRM). Na hora de gerar o site, eu uso essa referência.</p>
+
+      <div class="siteref__div"></div>
+      <span class="field__label" style="font-size:11px">Prévia do site novo</span>
+      <input class="field__input" id="previewUrl" placeholder="Cole o link da prévia gerada (arqhunter.vercel.app/p/…)" value="${(p.previewUrl || "").replace(/"/g, "&quot;")}" />
+      <button class="btn btn--sm btn--block" id="previewSaveBtn">Salvar prévia</button>
+      ${p.previewUrl ? `
+      <div class="siteref__row">
+        <a class="btn btn--sm btn--brand" href="${p.previewUrl}" target="_blank" rel="noopener">🔗 Abrir prévia</a>
+        <button class="btn btn--sm btn--ghost" id="medirNovoBtn">⚡ Medir site novo</button>
+      </div>
+      ${typeof p.previewScore === "number"
+        ? `<p class="siteref__hint">✅ Site novo: <b style="color:var(--good)">${p.previewScore}/100</b>${hasScore(p) ? ` &nbsp;·&nbsp; hoje <b>${p.siteScore}</b> → depois <b style="color:var(--good)">${p.previewScore}</b>` : ""}</p>`
+        : `<p class="siteref__hint">Clique em “Medir site novo” pra preencher o “depois” real.</p>`}
+      ` : ""}
     </div>
 
     <div class="section-label">CRM</div>
@@ -562,6 +577,39 @@ function openDrawer(id) {
         : "Não consegui salvar agora. Tente de novo.";
       toast(msg);
       console.warn("ref salvar:", err.message || err);
+    }
+  });
+
+  // prévia do site novo
+  $("#previewSaveBtn")?.addEventListener("click", () => {
+    const url = $("#previewUrl").value.trim();
+    p.previewUrl = url || null;
+    if (!url) p.previewScore = null;
+    if (!App.crm[p.id]) App.crm[p.id] = { stage: "novo", prospect: p };
+    App.crm[p.id].prospect = p;
+    crmSave(App.crm[p.id]);
+    updateCounts(); renderProspects(); renderBoard();
+    openDrawer(p.id);
+    toast(url ? "Prévia salva. ✓" : "Prévia removida.");
+  });
+  $("#medirNovoBtn")?.addEventListener("click", async () => {
+    const btn = $("#medirNovoBtn");
+    btn.disabled = true; btn.textContent = "Medindo… (~20s)";
+    try {
+      const r = await fetch("/api/medir", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: p.previewUrl })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "falhou");
+      p.previewScore = d.siteScore;
+      if (App.crm[p.id]) { App.crm[p.id].prospect = p; crmSave(App.crm[p.id]); }
+      renderProspects();
+      openDrawer(p.id);
+      toast(`Site novo: ${d.siteScore}/100 🎉`);
+    } catch (e) {
+      btn.disabled = false; btn.textContent = "⚡ Medir site novo";
+      toast("Não consegui medir agora. Tente de novo.");
     }
   });
 
