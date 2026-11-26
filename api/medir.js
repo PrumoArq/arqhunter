@@ -55,7 +55,9 @@ export default async function handler(req, res) {
 
     const finalUrl = lr.finalUrl || url;
     const https = /^https:\/\//i.test(finalUrl);
-    const viewportOk = audits.viewport && audits.viewport.score === 1;
+    // "não responsivo" só quando o Lighthouse reprova explicitamente (score 0);
+    // null/ausente = considera responsivo (tem a meta viewport).
+    const viewportOk = !(audits.viewport && audits.viewport.score === 0);
 
     const siteScore = perf != null ? perf : 0;
     const diagnostico = [
