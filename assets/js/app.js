@@ -451,6 +451,19 @@ function openDrawer(id) {
       ${p.mapsUrl ? `<button class="btn btn--sm btn--ghost" id="mapsBtn">Ver no Maps ↗</button>` : ""}
     </div>
 
+    <div class="section-label">Referência pro site novo</div>
+    <div class="siteref">
+      <input class="field__input" id="refLink" placeholder="Cole um link de referência (site que você curtiu)…" value="${(p.refLink || "").replace(/"/g, "&quot;")}" />
+      <div class="siteref__row">
+        <label class="btn btn--sm btn--ghost" for="refFile">📎 Anexar imagem</label>
+        <input type="file" id="refFile" accept="image/*" hidden />
+        <span class="siteref__name" id="refFileName">${p.refImageUrl ? "imagem anexada ✓" : ""}</span>
+      </div>
+      ${p.refImageUrl ? `<a href="${p.refImageUrl}" target="_blank" rel="noopener"><img src="${p.refImageUrl}" class="siteref__thumb" alt="referência" /></a>` : ""}
+      <button class="btn btn--sm btn--brand btn--block" id="refSaveBtn">Salvar referência</button>
+      <p class="siteref__hint">Fica salvo no negócio (entra no seu CRM). Na hora de gerar o site, eu uso essa referência.</p>
+    </div>
+
     <div class="section-label">CRM</div>
     <div class="status-row">
       <select class="field__input" id="stageSelect">
@@ -508,6 +521,50 @@ function openDrawer(id) {
   $("#igBtn")?.addEventListener("click", () =>
     window.open("https://instagram.com/" + p.instagram.replace("@", ""), "_blank"));
   $("#mapsBtn")?.addEventListener("click", () => window.open(p.mapsUrl, "_blank"));
+  // referência pro site novo (link + imagem)
+  $("#refFile")?.addEventListener("change", (e) => {
+    const f = e.target.files[0];
+    $("#refFileName").textContent = f ? f.name : "";
+  });
+  $("#refSaveBtn")?.addEventListener("click", async () => {
+    const btn = $("#refSaveBtn");
+    const link = $("#refLink").value.trim();
+    const file = $("#refFile").files[0];
+    if (!link && !file && !p.refImageUrl) { toast("Cole um link ou anexe uma imagem."); return; }
+    btn.disabled = true; btn.textContent = "Salvando…";
+    try {
+      let imgUrl = p.refImageUrl || null;
+      if (file) {
+        const sb = window.ARQHUNTER_SB;
+        if (!sb) throw new Error("sem supabase");
+        const { data: { session } } = await sb.auth.getSession();
+        const uid = session && session.user && session.user.id;
+        if (!uid) throw new Error("sem sessão");
+        const safe = file.name.replace(/[^\w.\-]+/g, "_");
+        const path = `${uid}/${p.id}/${Date.now()}-${safe}`;
+        const { error: upErr } = await sb.storage.from("referencias").upload(path, file, { upsert: true });
+        if (upErr) throw upErr;
+        imgUrl = sb.storage.from("referencias").getPublicUrl(path).data.publicUrl;
+      }
+      p.refLink = link || null;
+      p.refImageUrl = imgUrl;
+      // persiste junto do negócio (cria no CRM se ainda não estiver)
+      if (!App.crm[p.id]) App.crm[p.id] = { stage: "novo", prospect: p };
+      App.crm[p.id].prospect = p;
+      crmSave(App.crm[p.id]);
+      updateCounts(); renderProspects();
+      openDrawer(p.id);
+      toast("Referência salva. ✓");
+    } catch (err) {
+      btn.disabled = false; btn.textContent = "Salvar referência";
+      const msg = /bucket|not found|referencias|storage/i.test(String(err.message || err))
+        ? "Pra anexar imagem, rode o SQL do Storage primeiro (te mandei). O link já salva."
+        : "Não consegui salvar agora. Tente de novo.";
+      toast(msg);
+      console.warn("ref salvar:", err.message || err);
+    }
+  });
+
   $("#toCrmBtn").addEventListener("click", () => {
     const st = $("#stageSelect").value || "novo";
     addToCrm(p, st);
