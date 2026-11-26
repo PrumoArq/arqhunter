@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ARQHunter — Prospecção inteligente</title>
+  <meta name="description" content="Encontre negócios com site ruim, diagnostique, gere a abordagem e acompanhe no CRM." />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- ============ TOP NAV ============ -->
+    <header class="topnav">
+      <div class="brand">
+        <svg class="brand__logo" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="arqg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#1ee0c0"/><stop offset="1" stop-color="#0fb89e"/>
+            </linearGradient>
+          </defs>
+          <rect width="40" height="40" rx="11" fill="url(#arqg)"/>
+          <circle cx="20" cy="20" r="9.5" stroke="#fff" stroke-width="2.2"/>
+          <circle cx="20" cy="20" r="2.6" fill="#fff"/>
+          <path d="M20 4.5v5M20 30.5v5M4.5 20h5M30.5 20h5" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+        <div class="brand__name">ARQ<b>Hunter</b></div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav__item is-active" data-view="painel"><span class="nav__icon">◳</span> Painel</button>
+        <button class="nav__item" data-view="busca"><span class="nav__icon">⌖</span> Nova busca</button>
+        <button class="nav__item" data-view="prospects"><span class="nav__icon">◴</span> Prospects <span class="nav__badge" id="navProspectsCount">0</span></button>
+        <button class="nav__item" data-view="crm"><span class="nav__icon">▦</span> CRM <span class="nav__badge" id="navCrmCount">0</span></button>
+      </nav>
+
+      <div class="topnav__right">
+        <span class="chip chip--muted">Protótipo · dados fictícios</span>
+        <span class="whoami" id="authWhoami"></span>
+        <button class="btn btn--ghost btn--sm" id="authLogout" hidden>Sair</button>
+      </div>
+    </header>
+
+    <!-- ============ VIEW: PAINEL ============ -->
+    <section class="view is-active" id="view-painel">
+      <div class="page-head">
+        <h1 class="page-head__title">Painel</h1>
+        <p class="page-head__sub">Sua operação de prospecção em um relance.</p>
+      </div>
+      <div class="dash" id="dashRoot"></div>
+    </section>
+
+    <!-- ============ VIEW: BUSCA ============ -->
+    <section class="view" id="view-busca">
+      <div class="page-head">
+        <h1 class="page-head__title">Nova busca</h1>
+        <p class="page-head__sub">Encontre quem precisa de você e chegue com o diagnóstico pronto.</p>
+      </div>
+
+      <div class="panel panel--form">
+        <h2 class="panel__title">Quem você quer encontrar?</h2>
+        <p class="panel__sub">A busca puxa negócios do Google Maps e do Instagram, mede os sites e separa quem precisa de você.</p>
+
+        <form id="searchForm" class="form">
+          <div class="form__row">
+            <label class="field">
+              <span class="field__label">Nicho</span>
+              <input class="field__input" name="nicho" list="nichos" placeholder="Ex.: Pet shop, Restaurante, Clínica..." required />
+              <datalist id="nichos">
+                <option value="Pet shop"></option><option value="Restaurante"></option>
+                <option value="Clínica odontológica"></option><option value="Academia"></option>
+                <option value="Salão de beleza"></option><option value="Escritório de arquitetura"></option>
+                <option value="Advocacia"></option><option value="Imobiliária"></option>
+              </datalist>
+            </label>
+            <label class="field">
+              <span class="field__label">Cidade / região</span>
+              <input class="field__input" name="cidade" placeholder="Ex.: Rio de Janeiro — RJ" />
+            </label>
+          </div>
+
+          <div class="form__row">
+            <fieldset class="field">
+              <span class="field__label">Fontes</span>
+              <div class="toggle-group">
+                <label class="toggle"><input type="checkbox" name="fonte" value="maps" checked /> <span>Maps</span></label>
+                <label class="toggle"><input type="checkbox" name="fonte" value="instagram" checked /> <span>Instagram</span></label>
+                <label class="toggle"><input type="checkbox" name="fonte" value="meta" checked /> <span>Meta Ads</span></label>
+              </div>
+            </fieldset>
+            <label class="field">
+              <span class="field__label">Abrangência</span>
+              <select class="field__input" name="abrangencia">
+                <option value="cidade" selected>Cidade / região</option>
+                <option value="brasil">Brasil inteiro</option>
+                <option value="pais">Outro país</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="form__row">
+            <label class="field">
+              <span class="field__label">Filtro</span>
+              <select class="field__input" name="filtro">
+                <option value="todos">Todos os negócios</option>
+                <option value="precisa" selected>Só quem precisa de mim (site ruim / sem site)</option>
+                <option value="sem-site">Só quem está sem site</option>
+              </select>
+            </label>
+            <div class="field"></div>
+          </div>
+
+          <div class="form__actions">
+            <button type="submit" class="btn btn--primary" id="searchBtn">Buscar negócios</button>
+            <span class="form__note">Até 200 negócios por busca.</span>
+          </div>
+        </form>
+      </div>
+
+      <div class="searching" id="searching" hidden>
+        <div class="searching__bar"><span></span></div>
+        <p class="searching__text" id="searchingText">Conectando ao Google Maps…</p>
+      </div>
+
+      <div class="panel panel--empty" id="searchHint">
+        <p>Faça uma busca para ver os negócios aparecerem aqui. Depois você analisa, gera a abordagem e manda pro CRM.</p>
+      </div>
+    </section>
+
+    <!-- ============ VIEW: PROSPECTS ============ -->
+    <section class="view" id="view-prospects">
+      <div class="page-head">
+        <h1 class="page-head__title">Prospects</h1>
+        <p class="page-head__sub">Negócios encontrados na última busca.</p>
+      </div>
+
+      <div class="results-summary" id="prospectSummary" hidden></div>
+
+      <div class="toolbar">
+        <div class="toolbar__filters">
+          <button class="filter is-active" data-filter="todos">Todos</button>
+          <button class="filter" data-filter="sem-site">Sem site</button>
+          <button class="filter" data-filter="site-ruim">Site ruim</button>
+          <button class="filter" data-filter="instagram">Via Instagram</button>
+        </div>
+        <input class="search-input" id="prospectSearch" placeholder="Filtrar por nome…" />
+      </div>
+
+      <div class="prospect-list" id="prospectList"></div>
+      <div class="panel panel--empty" id="prospectsEmpty">
+        <p>Nenhum prospect ainda. Rode uma busca em <b>Nova busca</b>.</p>
+      </div>
+    </section>
+
+    <!-- ============ VIEW: CRM ============ -->
+    <section class="view" id="view-crm">
+      <div class="page-head">
+        <h1 class="page-head__title">CRM</h1>
+        <p class="page-head__sub">Seu pipeline de prospecção, do primeiro contato ao fechamento.</p>
+      </div>
+      <div class="crm-stats" id="crmStats"></div>
+      <div class="board" id="board"></div>
+    </section>
+
+  </div>
+
+  <!-- ============ DRAWER ============ -->
+  <div class="drawer-overlay" id="drawerOverlay" hidden></div>
+  <aside class="drawer" id="drawer" hidden aria-hidden="true">
+    <div class="drawer__inner" id="drawerInner"></div>
+  </aside>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <!-- ============ TELA DE LOGIN (porta de entrada) ============ -->
+  <div class="auth-gate" id="authGate" hidden>
+    <div class="auth-card">
+      <div class="auth-brand">
+        <svg class="brand__logo" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="arqg2" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#1ee0c0"/><stop offset="1" stop-color="#0fb89e"/>
+            </linearGradient>
+          </defs>
+          <rect width="40" height="40" rx="11" fill="url(#arqg2)"/>
+          <circle cx="20" cy="20" r="9.5" stroke="#fff" stroke-width="2.2"/>
+          <circle cx="20" cy="20" r="2.6" fill="#fff"/>
+          <path d="M20 4.5v5M20 30.5v5M4.5 20h5M30.5 20h5" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+        <div class="brand__name">ARQ<b>Hunter</b></div>
+      </div>
+
+      <h1 class="auth__title" id="authTitle">Entrar no ARQHunter</h1>
+      <p class="auth__sub" id="authSub">Acesse sua operação de prospecção.</p>
+
+      <div class="auth__warn" id="authConfigWarn" hidden>
+        Login ainda não ativado. Cole as chaves públicas do Supabase em
+        <code>assets/js/config.js</code> para a porta funcionar de verdade.
+      </div>
+
+      <form class="auth-form" id="authForm" autocomplete="on">
+        <label class="field">
+          <span class="field__label">E-mail</span>
+          <input class="field__input" id="authEmail" type="email" placeholder="voce@email.com" autocomplete="email" required />
+        </label>
+        <label class="field">
+          <span class="field__label">Senha</span>
+          <input class="field__input" id="authPass" type="password" placeholder="••••••••" autocomplete="current-password" required />
+        </label>
+
+        <p class="auth__note" id="authNote" hidden></p>
+
+        <button type="submit" class="btn btn--primary btn--block" id="authSubmit">Entrar</button>
+      </form>
+
+      <button class="auth__toggle" id="authToggle">Ainda não tem conta? <b>Criar conta</b></button>
+      <button class="auth__guest" id="authGuest" hidden>Ver o protótipo sem login →</button>
+    </div>
+  </div>
+
+  <!-- cliente do Supabase (chaves públicas) + autenticação -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/auth.js"></script>
+</body>
+</html>
