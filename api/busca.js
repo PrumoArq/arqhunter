@@ -28,7 +28,8 @@ const FIELD_MASK = [
   "places.rating",
   "places.userRatingCount",
   "places.googleMapsUri",
-  "places.primaryTypeDisplayName"
+  "places.primaryTypeDisplayName",
+  "nextPageToken"               // pra paginar (puxar mais que 20)
 ].join(",");
 
 // "site falso": quando o Google devolve como site um link de WhatsApp, rede
@@ -65,25 +66,38 @@ export default async function handler(req, res) {
 
     const textQuery = cidade ? `${nicho} em ${cidade}` : nicho;
 
-    const resp = await fetch(PLACES_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": apiKey,
-        "X-Goog-FieldMask": FIELD_MASK
-      },
-      body: JSON.stringify({ textQuery, languageCode: "pt-BR", regionCode: "BR" })
-    });
+    // Pagina até 3 páginas (~60 negócios). Cada página = 1 requisição (SKU).
+    const places = [];
+    let pageToken = null;
+    for (let page = 0; page < 3; page++) {
+      const reqBody = { textQuery, languageCode: "pt-BR", regionCode: "BR", pageSize: 20 };
+      if (pageToken) reqBody.pageToken = pageToken;
 
-    const data = await resp.json().catch(() => ({}));
-    if (!resp.ok) {
-      return res.status(resp.status).json({
-        error: "O Google Places recusou a busca",
-        detail: (data && data.error && data.error.message) || data
+      const resp = await fetch(PLACES_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": apiKey,
+          "X-Goog-FieldMask": FIELD_MASK
+        },
+        body: JSON.stringify(reqBody)
       });
-    }
 
-    const places = Array.isArray(data.places) ? data.places : [];
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        if (page === 0) {
+          return res.status(resp.status).json({
+            error: "O Google Places recusou a busca",
+            detail: (data && data.error && data.error.message) || data
+          });
+        }
+        break; // erro só a partir da 2ª página: fica com o que já veio
+      }
+
+      if (Array.isArray(data.places)) places.push(...data.places);
+      pageToken = data.nextPageToken || null;
+      if (!pageToken) break;
+    }
     let prospects = places.map(p => {
       const tel = p.nationalPhoneNumber || p.internationalPhoneNumber || null;
       const rawSite = p.websiteUri || null;

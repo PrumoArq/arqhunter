@@ -59,7 +59,7 @@
 
       <div class="panel panel--form">
         <h2 class="panel__title">Quem você quer encontrar?</h2>
-        <p class="panel__sub">A busca puxa negócios do Google Maps e do Instagram, mede os sites e separa quem precisa de você.</p>
+        <p class="panel__sub">Busca negócios reais no Google Maps por <b>nicho + cidade</b> e separa quem está sem site (ou só com link). Dica: funciona melhor com uma cidade.</p>
 
         <form id="searchForm" class="form">
           <div class="form__row">
@@ -78,21 +78,10 @@
               <span class="field__label">Fontes</span>
               <div class="toggle-group">
                 <label class="toggle"><input type="checkbox" name="fonte" value="maps" checked /> <span>Maps</span></label>
-                <label class="toggle"><input type="checkbox" name="fonte" value="instagram" checked /> <span>Instagram</span></label>
-                <label class="toggle"><input type="checkbox" name="fonte" value="meta" checked /> <span>Meta Ads</span></label>
+                <label class="toggle toggle--soon"><input type="checkbox" name="fonte" value="instagram" disabled /> <span>Instagram · em breve</span></label>
+                <label class="toggle toggle--soon"><input type="checkbox" name="fonte" value="meta" disabled /> <span>Meta Ads · em breve</span></label>
               </div>
             </fieldset>
-            <label class="field">
-              <span class="field__label">Abrangência</span>
-              <select class="field__input" name="abrangencia">
-                <option value="cidade" selected>Cidade / região</option>
-                <option value="brasil">Brasil inteiro</option>
-                <option value="pais">Outro país</option>
-              </select>
-            </label>
-          </div>
-
-          <div class="form__row">
             <label class="field">
               <span class="field__label">Filtro</span>
               <select class="field__input" name="filtro">
@@ -100,12 +89,11 @@
                 <option value="sem-site">Sem site de verdade (ou só link: WhatsApp, Linktree…)</option>
               </select>
             </label>
-            <div class="field"></div>
           </div>
 
           <div class="form__actions">
             <button type="submit" class="btn btn--primary" id="searchBtn">Buscar negócios</button>
-            <span class="form__note">Até 200 negócios por busca.</span>
+            <span class="form__note">Até 60 negócios por busca (Google Maps).</span>
           </div>
         </form>
       </div>

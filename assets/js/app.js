@@ -255,7 +255,7 @@ async function runSearch(params) {
   App.prospects = prospects;
   App.searched = true;
   updateCounts();
-  const scope = { brasil: "Brasil inteiro", pais: "outro país" }[params.abrangencia] || (params.cidade || "sua região");
+  const scope = params.cidade || "sua busca";
   toast(usouDemo
     ? `Modo demonstração · ${App.prospects.length} negócios`
     : `${App.prospects.length} negócios · ${scope}`);

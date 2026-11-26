@@ -476,3 +476,7 @@ body.is-locked .app { display: none; }
   padding: 9px 11px; font-size: 14px; color: var(--text); cursor: pointer; border-radius: 8px;
 }
 .combo-opt:hover, .combo-opt.is-active { background: var(--surface-2); }
+
+/* fontes ainda não implementadas (Instagram/Meta) aparecem apagadas */
+.toggle--soon { opacity: .5; cursor: not-allowed; }
+.toggle--soon span { font-size: 12px; }
