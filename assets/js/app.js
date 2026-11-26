@@ -371,7 +371,8 @@ function improvedValue(nome) {
 
 /* ============ DRAWER (detalhe + abordagem) ============ */
 function openDrawer(id) {
-  const p = App.prospects.find(x => x.id === id);
+  // procura na última busca; se não achar, pega do CRM (negócio já salvo)
+  const p = App.prospects.find(x => x.id === id) || (App.crm[id] && App.crm[id].prospect);
   if (!p) return;
 
   const temDiag = Array.isArray(p.diagnostico) && p.diagnostico.length > 0;
@@ -590,6 +591,39 @@ async function roidataSync(prospectId, stage) {
   }
 }
 
+/* ---- Persistência do CRM no Supabase (tabela crm_leads) ----
+   Se não houver login/Supabase (ex.: rodando local), fica só na memória. */
+async function crmSave(entry) {
+  const sb = window.ARQHUNTER_SB;
+  if (!sb || !entry || !entry.prospect) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const uid = session && session.user && session.user.id;
+    if (!uid) return;  // sem sessão → não dá pra salvar
+    const { error } = await sb.from("crm_leads").upsert(
+      { owner: uid, ext_id: entry.prospect.id, stage: entry.stage, prospect: entry.prospect },
+      { onConflict: "owner,ext_id" }
+    );
+    if (error) throw error;
+  } catch (e) { console.warn("CRM salvar:", e.message || e); }
+}
+
+async function crmLoad() {
+  const sb = window.ARQHUNTER_SB;
+  if (!sb) return;
+  try {
+    const { data, error } = await sb.from("crm_leads").select("ext_id, stage, prospect, roidata_id");
+    if (error) throw error;
+    App.crm = {};
+    (data || []).forEach(r => {
+      if (r.prospect) App.crm[r.ext_id] = { stage: r.stage, prospect: r.prospect, roidataId: r.roidata_id || null };
+    });
+    updateCounts();
+    renderBoard();
+    if (App.activeView === "painel") renderDashboard();
+  } catch (e) { console.warn("CRM carregar:", e.message || e); }
+}
+
 function addToCrm(p, stage) {
   // 1) pipeline local (sempre) — é o que aparece no board do CRM
   App.crm[p.id] = { stage, prospect: p };
@@ -598,8 +632,10 @@ function addToCrm(p, stage) {
   closeDrawer();
   toast(`${p.nome} → ${CRM_STAGES.find(s => s.id === stage)?.label}`);
 
-  // 2) envia pro RoiData via back-end (a chave fica lá, nunca aqui).
-  //    Ative trocando CRM_API.enabled para true quando o back-end estiver no ar.
+  // 2) salva no Supabase pra NÃO sumir ao atualizar a página
+  crmSave(App.crm[p.id]);
+
+  // 3) (parado) envia pro RoiData via back-end quando CRM_API.enabled = true
   if (CRM_API.enabled) roidataSync(p.id, stage);
 }
 
@@ -663,11 +699,18 @@ function setupDragDrop() {
   let dragId = null;
 
   $$(".card").forEach(card => {
+    let moved = false;
     card.addEventListener("dragstart", () => {
       dragId = card.dataset.id;
+      moved = true;
       card.classList.add("dragging");
     });
-    card.addEventListener("dragend", () => card.classList.remove("dragging"));
+    card.addEventListener("dragend", () => {
+      card.classList.remove("dragging");
+      setTimeout(() => (moved = false), 0);
+    });
+    // clicar no card (sem arrastar) reabre o detalhe do negócio
+    card.addEventListener("click", () => { if (!moved) openDrawer(card.dataset.id); });
   });
 
   $$(".column__body").forEach(col => {
@@ -680,6 +723,7 @@ function setupDragDrop() {
         const entry = App.crm[dragId];
         entry.stage = col.dataset.stage;
         renderBoard();
+        crmSave(entry);   // persiste o novo estágio no Supabase
 
         // atualiza o status no RoiData (via back-end). Usa o id do lead;
         // se ainda não tiver, o RoiData aceita identificar pelo telefone.
@@ -817,4 +861,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateCounts();
   renderDashboard();
+
+  // carrega o CRM salvo no Supabase (persistência) e reage a login/logout
+  const sb = window.ARQHUNTER_SB;
+  if (sb) {
+    crmLoad();
+    sb.auth.onAuthStateChange((_e, session) => {
+      if (session) crmLoad();
+      else { App.crm = {}; updateCounts(); renderBoard(); renderDashboard(); }
+    });
+  }
 });
