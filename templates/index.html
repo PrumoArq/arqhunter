@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ARQHunter — Base de templates · Construção civil</title>
+<meta name="description" content="Galeria dos templates de site do ARQHunter para o nicho de construção civil.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./assets/base.css">
+<style>
+  :root{--brand:#1f6feb;--brand-2:#143d8a;--accent:#ffb020;--font-head:"Sora",system-ui,sans-serif}
+  body{background:var(--surface)}
+  .head{padding:clamp(40px,7vw,80px) 0 clamp(24px,4vw,40px)}
+  .tcards{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(18px,2.5vw,28px)}
+  .tcard{background:#fff;border:1px solid var(--border);border-radius:20px;overflow:hidden;text-decoration:none;color:inherit;transition:transform .22s,box-shadow .22s}
+  .tcard:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
+  .tcard__top{height:168px;display:grid;place-items:center;position:relative;overflow:hidden}
+  .tcard__top svg{position:absolute;inset:0;width:100%;height:100%;opacity:.4}
+  .tcard__tag{position:relative;z-index:2;font-family:var(--font-head);font-weight:800;color:#fff;font-size:1.3rem;text-shadow:0 2px 12px rgba(0,0,0,.25)}
+  .tcard__body{padding:22px 24px 26px}
+  .tcard__body h3{font-family:var(--font-head);font-size:1.25rem;margin-bottom:.3rem}
+  .tcard__body p{font-size:.93rem;color:var(--muted)}
+  .tcard__open{display:inline-flex;align-items:center;gap:.4rem;margin-top:1rem;font-weight:600;color:var(--brand);font-size:.95rem}
+  .note{background:#fff;border:1px solid var(--border);border-radius:16px;padding:22px 26px;margin-top:clamp(28px,4vw,44px);font-size:.95rem;color:var(--muted)}
+  .note b{color:var(--ink)}
+  @media(max-width:720px){.tcards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<section class="head">
+  <div class="container">
+    <span class="eyebrow">ARQHunter · Base de templates</span>
+    <h1 style="font-family:var(--font-head);font-size:clamp(2rem,5vw,3.2rem)">Construção civil</h1>
+    <p class="lead" style="margin-top:.6rem">5 modelos originais, rápidos e mobile-first. Clique pra abrir cada um em tela cheia. São a base que o ARQHunter usa pra reconstruir o site do cliente — depois a gente reaproveita esse estilo pros outros nichos.</p>
+  </div>
+</section>
+
+<section class="container" style="padding-bottom:clamp(40px,7vw,80px)">
+  <div class="tcards">
+
+    <a class="tcard" href="./arquitetura/">
+      <div class="tcard__top" style="background:linear-gradient(135deg,#9a6a4f,#6f4733)">
+        <svg viewBox="0 0 400 200" stroke="#fff" stroke-width="1.2" fill="none"><path d="M40 180V80l160-50 160 50v100M120 180v-60h60v60M240 120h70v60h-70z"/></svg>
+        <span class="tcard__tag">Arquitetura</span>
+      </div>
+      <div class="tcard__body"><h3>Studio Lume</h3><p>Escritórios de arquitetura e design de interiores. Editorial, minimalista, portfólio protagonista.</p><span class="tcard__open">Abrir template →</span></div>
+    </a>
+
+    <a class="tcard" href="./construtora/">
+      <div class="tcard__top" style="background:linear-gradient(135deg,#2a2f38,#15181d)">
+        <svg viewBox="0 0 400 200" stroke="#c8a24b" stroke-width="1.4" fill="none"><rect x="90" y="40" width="80" height="140"/><rect x="200" y="70" width="100" height="110"/><path d="M104 60h52M104 90h52M104 120h52M104 150h52M216 95h68M216 125h68M216 155h68"/></svg>
+        <span class="tcard__tag">Construtora</span>
+      </div>
+      <div class="tcard__body"><h3>Marco Zero</h3><p>Construtoras e incorporadoras. Sólido e premium, grade de empreendimentos, "agende visita".</p><span class="tcard__open">Abrir template →</span></div>
+    </a>
+
+    <a class="tcard" href="./engenharia/">
+      <div class="tcard__top" style="background:linear-gradient(135deg,#1d5fd6,#113c91);background-image:linear-gradient(135deg,#1d5fd6,#113c91),linear-gradient(rgba(255,255,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);background-size:cover,26px 26px,26px 26px">
+        <svg viewBox="0 0 400 200" stroke="#20b8a6" stroke-width="1.6" fill="none"><path d="M60 170L200 40l140 130M100 170V110h60v60M240 120h60v50h-60z"/></svg>
+        <span class="tcard__tag">Engenharia</span>
+      </div>
+      <div class="tcard__body"><h3>EstruturaPro</h3><p>Engenharia civil, projetos, laudos e gerenciamento. Técnico, azul blueprint, credibilidade.</p><span class="tcard__open">Abrir template →</span></div>
+    </a>
+
+    <a class="tcard" href="./esquadrias/">
+      <div class="tcard__top" style="background:linear-gradient(135deg,#2b3542,#151b24)">
+        <svg viewBox="0 0 400 200" stroke="#ff6a1a" stroke-width="1.6" fill="none"><rect x="130" y="30" width="140" height="150"/><path d="M200 30v150M130 105h140"/></svg>
+        <span class="tcard__tag">Esquadrias</span>
+      </div>
+      <div class="tcard__body"><h3>Alumix</h3><p>Alumínio, PVC e vidro. Industrial clean, foco no produto, medição grátis e orçamento.</p><span class="tcard__open">Abrir template →</span></div>
+    </a>
+
+    <a class="tcard" href="./materiais/">
+      <div class="tcard__top" style="background:linear-gradient(135deg,#2a2a2a,#111)">
+        <svg viewBox="0 0 400 200" stroke="#f5b301" stroke-width="2" fill="none"><rect x="90" y="60" width="90" height="55"/><rect x="90" y="125" width="90" height="45"/><rect x="220" y="60" width="90" height="55"/><rect x="220" y="125" width="90" height="45"/></svg>
+        <span class="tcard__tag">Materiais</span>
+      </div>
+      <div class="tcard__body"><h3>Casa Forte</h3><p>Lojas e depósitos de material. Comercial e forte, categorias, ofertas e entrega.</p><span class="tcard__open">Abrir template →</span></div>
+    </a>
+
+    <div class="tcard" style="display:grid;place-items:center;border-style:dashed;background:transparent;cursor:default">
+      <div style="text-align:center;padding:30px;color:var(--muted)"><div style="font-size:2rem">➕</div><p style="font-size:.95rem;margin-top:.5rem">Mais nichos reaproveitam<br>esse mesmo estilo</p></div>
+    </div>
+
+  </div>
+
+  <div class="note">
+    <p><b>Como isso vira o site do cliente:</b> o ARQHunter detecta o nicho pela categoria do Google, escolhe o template certo aqui da base e injeta o <b>logo, as cores, a copy e as fotos reais</b> do cliente. Os nomes e textos acima são só demonstração — na geração, tudo é substituído pelos dados dele. Imagens são placeholders (onde entra a foto real).</p>
+  </div>
+</section>
+
+</body>
+</html>

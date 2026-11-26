@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EstruturaPro Engenharia — Projetos, Laudos e Gerenciamento de Obras</title>
+<meta name="description" content="Engenharia civil completa: projeto estrutural, laudos técnicos, regularização e gerenciamento de obra. CREA ativo. Peça seu orçamento.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/base.css">
+<style>
+  :root{
+    --brand:#1d5fd6;--brand-2:#113c91;--accent:#20b8a6;
+    --ink:#101a2b;--muted:#5a6678;--bg:#ffffff;--surface:#f3f6fb;--surface-2:#e7edf7;--border:#dde6f2;--on-brand:#fff;
+    --font-head:"Space Grotesk",system-ui,sans-serif;--font-body:"Inter",system-ui,sans-serif;
+    --radius:14px;
+  }
+  .blueprint{background:var(--ink);color:#fff;position:relative;overflow:hidden;background-image:linear-gradient(rgba(255,255,255,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.055) 1px,transparent 1px);background-size:40px 40px}
+  .hero__grid{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(28px,5vw,56px);align-items:center;position:relative}
+  .hero h1 span{color:var(--accent)}
+  .hero .lead{color:rgba(255,255,255,.72)}
+  .hero__panel{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:var(--radius);padding:26px}
+  .hero__panel .row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px dashed rgba(255,255,255,.14);font-size:.95rem}
+  .hero__panel .row:last-child{border:0}
+  .hero__panel b{font-family:var(--font-head);color:var(--accent);font-size:1.15rem}
+  .serv{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(16px,2.4vw,24px)}
+  .proc{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;counter-reset:p}
+  .proc__item{position:relative;padding-top:2.4rem}
+  .proc__item::before{counter-increment:p;content:counter(p);position:absolute;top:0;left:0;width:2.2rem;height:2.2rem;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-family:var(--font-head);font-weight:700}
+  .cert{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center}
+  .cert span{border:1px solid var(--border);border-radius:999px;padding:.6em 1.2em;font-weight:600;font-size:.9rem;color:var(--muted);background:var(--bg)}
+  @media(max-width:860px){.hero__grid{grid-template-columns:1fr}.serv{grid-template-columns:1fr}.proc{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav__row">
+    <a class="brand" href="#"><span class="brand__mark">E</span>Estrutura<span style="color:var(--brand)">Pro</span></a>
+    <nav class="nav__links">
+      <a href="#servicos">Serviços</a>
+      <a href="#processo">Processo</a>
+      <a href="#projetos">Projetos</a>
+      <a href="#contato">Contato</a>
+    </nav>
+    <div class="nav__cta">
+      <a class="btn btn--brand" href="https://wa.me/5516999990000?text=Quero%20um%20or%C3%A7amento%20de%20engenharia." target="_blank" rel="noopener">Pedir orçamento</a>
+      <button class="nav__burger" aria-label="Menu"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<section class="hero blueprint">
+  <div class="container hero__grid">
+    <div class="reveal">
+      <span class="eyebrow" style="color:var(--accent)">Engenharia Civil · CREA ativo</span>
+      <h1>Projetos que <span>sustentam</span> grandes obras.</h1>
+      <p class="lead">Cálculo estrutural, laudos técnicos, regularização e gerenciamento de obra com rigor técnico e responsabilidade de quem assina a ART.</p>
+      <div class="hero__cta">
+        <a class="btn btn--brand btn--lg" href="https://wa.me/5516999990000?text=Quero%20um%20or%C3%A7amento." target="_blank" rel="noopener">Solicitar orçamento</a>
+        <a class="btn btn--ghost btn--lg" href="#servicos" style="border-color:rgba(255,255,255,.3);color:#fff">Ver serviços</a>
+      </div>
+    </div>
+    <div class="hero__panel reveal d1">
+      <div class="row"><span>Obras acompanhadas</span><b><span data-count="310" data-suf="+">0</span></b></div>
+      <div class="row"><span>m² de projeto estrutural</span><b><span data-count="480" data-suf=" mil">0</span></b></div>
+      <div class="row"><span>Laudos emitidos</span><b><span data-count="1200" data-suf="+">0</span></b></div>
+      <div class="row"><span>Prazo médio de laudo</span><b>48h</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVIÇOS -->
+<section class="section" id="servicos">
+  <div class="container">
+    <div class="sec-head reveal"><span class="eyebrow">O que fazemos</span><h2>Engenharia completa, do cálculo à entrega</h2></div>
+    <div class="serv">
+      <div class="card reveal"><div class="card__ico">📐</div><h3>Projeto estrutural</h3><p>Dimensionamento em concreto, aço e madeira com software de ponta e ART registrada.</p></div>
+      <div class="card reveal d1"><div class="card__ico">🔎</div><h3>Laudos técnicos</h3><p>Laudo de vistoria, estrutural, de patologias e avaliação de imóveis (NBR).</p></div>
+      <div class="card reveal d2"><div class="card__ico">🏢</div><h3>Regularização</h3><p>Averbação, habite-se, projeto legal e aprovação na prefeitura e bombeiros.</p></div>
+      <div class="card reveal"><div class="card__ico">🏗️</div><h3>Gerenciamento de obra</h3><p>Planejamento, orçamento, cronograma físico-financeiro e fiscalização em campo.</p></div>
+      <div class="card reveal d1"><div class="card__ico">🧱</div><h3>Reforço estrutural</h3><p>Recuperação de estruturas, fibra de carbono e soluções para patologias.</p></div>
+      <div class="card reveal d2"><div class="card__ico">📊</div><h3>Consultoria</h3><p>Viabilidade técnica, perícia e assistência técnica em processos.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESSO -->
+<section class="section section--tint" id="processo">
+  <div class="container">
+    <div class="sec-head reveal"><span class="eyebrow">Como funciona</span><h2>Do primeiro contato à ART assinada</h2></div>
+    <div class="proc reveal">
+      <div class="proc__item"><h3 style="font-size:1.1rem">Diagnóstico</h3><p class="muted" style="font-size:.92rem">Entendemos a obra e o que você precisa.</p></div>
+      <div class="proc__item"><h3 style="font-size:1.1rem">Orçamento</h3><p class="muted" style="font-size:.92rem">Proposta clara, sem letras miúdas.</p></div>
+      <div class="proc__item"><h3 style="font-size:1.1rem">Execução técnica</h3><p class="muted" style="font-size:.92rem">Projeto/laudo feito com norma e prazo.</p></div>
+      <div class="proc__item"><h3 style="font-size:1.1rem">Entrega + ART</h3><p class="muted" style="font-size:.92rem">Documento assinado e responsabilidade registrada.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJETOS -->
+<section class="section" id="projetos">
+  <div class="container">
+    <div class="sec-head reveal"><span class="eyebrow">Alguns projetos</span><h2>Estruturas que já estão de pé</h2></div>
+    <div class="grid g-3">
+      <div class="ph ph--tall reveal" data-label="Foto da obra">
+        <svg viewBox="0 0 300 340" preserveAspectRatio="none" stroke="#fff" stroke-width="1" fill="none" opacity=".5"><path d="M30 310V90h240v220M30 170h240M30 240h240M90 90v220M150 90v220M210 90v220"/></svg>
+      </div>
+      <div class="ph ph--tall reveal d1" style="--brand:#2b7f73;--brand-2:#145a50" data-label="Foto da obra">
+        <svg viewBox="0 0 300 340" preserveAspectRatio="none" stroke="#fff" stroke-width="1" fill="none" opacity=".5"><path d="M40 310L150 70l110 240M70 250h160M100 190h100"/></svg>
+      </div>
+      <div class="ph ph--tall reveal d2" style="--brand:#3a5a9c;--brand-2:#1d3466" data-label="Foto da obra">
+        <svg viewBox="0 0 300 340" preserveAspectRatio="none" stroke="#fff" stroke-width="1" fill="none" opacity=".5"><circle cx="150" cy="170" r="110"/><path d="M40 170h220M150 60v220"/></svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CERTIFICAÇÕES / CTA -->
+<section class="section section--tint">
+  <div class="container center">
+    <div class="sec-head center reveal"><span class="eyebrow">Credibilidade</span><h2>Registro e norma em tudo que assinamos</h2></div>
+    <div class="cert reveal"><span>CREA-SP ativo</span><span>ART em todo projeto</span><span>Normas ABNT/NBR</span><span>Seguro de responsabilidade</span></div>
+  </div>
+</section>
+
+<section class="section" id="contato">
+  <div class="container"><div class="cta reveal">
+    <h2>Precisa de um projeto ou laudo? Fale com um engenheiro.</h2>
+    <p class="lead">Envie os detalhes da sua obra pelo WhatsApp e receba um orçamento sem compromisso.</p>
+    <div class="hero__cta">
+      <a class="btn btn--wa btn--lg" href="https://wa.me/5516999990000?text=Quero%20falar%20com%20um%20engenheiro." target="_blank" rel="noopener">Falar no WhatsApp</a>
+      <a class="btn btn--ghost btn--lg" href="tel:+5516999990000" style="border-color:rgba(255,255,255,.4);color:#fff">(16) 99999-0000</a>
+    </div>
+  </div></div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div><a class="brand" href="#" style="color:#fff;margin-bottom:1rem"><span class="brand__mark">E</span>EstruturaPro</a><p style="color:rgba(255,255,255,.6)">Engenharia civil em Ribeirão Preto/SP. Eng. Responsável — CREA 0000000.</p></div>
+      <div><h4>Serviços</h4><p style="line-height:2.1"><a href="#servicos">Projeto estrutural</a><br><a href="#servicos">Laudos técnicos</a><br><a href="#servicos">Gerenciamento</a></p></div>
+      <div><h4>Contato</h4><p style="line-height:2.1">(16) 99999-0000<br>contato@estruturapro.com.br<br>R. dos Engenheiros, 450 — Ribeirão Preto/SP</p></div>
+    </div>
+    <div class="footer__bottom"><span>© 2026 EstruturaPro Engenharia.</span><span>Feito com ARQHunter</span></div>
+  </div>
+</footer>
+
+<a class="wa-float" href="https://wa.me/5516999990000?text=Ol%C3%A1!" target="_blank" rel="noopener" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.8 4.9-1.3A10 10 0 1 0 12 2Zm5.7 14.3c-.2.6-1.2 1.2-1.7 1.2-.4.1-1 .1-1.5-.1-.4-.1-.9-.3-1.6-.6-2.8-1.2-4.6-4-4.7-4.2-.2-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 .9-2.2a1 1 0 0 1 .7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.4.6-.3.3c-.2.2-.3.4-.2.6.2.4.8 1.3 1.6 2 1 .9 1.8 1.1 2.1 1.3.2.1.4 0 .5-.1l.8-1c.2-.2.3-.2.6-.1l2 .9c.2.1.4.2.4.3.1.2.1.6-.1 1.2Z"/></svg>
+</a>
+
+<script src="../assets/base.js"></script>
+</body>
+</html>
