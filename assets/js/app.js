@@ -9,7 +9,8 @@ const App = {
   crm: {},                // { prospectId: { stage, prospect } }
   activeView: "busca",
   prospectFilter: "todos",
-  prospectQuery: ""
+  prospectQuery: "",
+  searched: false         // já rodou alguma busca? (pra mensagem de "vazio")
 };
 
 /* Integração com o CRM RoiData.
@@ -252,6 +253,7 @@ async function runSearch(params) {
   btn.disabled = false;
 
   App.prospects = prospects;
+  App.searched = true;
   updateCounts();
   const scope = { brasil: "Brasil inteiro", pais: "outro país" }[params.abrangencia] || (params.cidade || "sua região");
   toast(usouDemo
@@ -266,14 +268,18 @@ function renderProspects() {
   const empty = $("#prospectsEmpty");
 
   let items = App.prospects.filter(p => {
-    if (App.prospectFilter === "sem-site" && p.site) return false;
-    if (App.prospectFilter === "site-ruim" && (!p.site || p.siteScore >= 70)) return false;
-    if (App.prospectFilter === "instagram" && p.fonte !== "instagram") return false;
+    if (App.prospectFilter === "sem-site" && p.site) return false;          // sem site real (inclui "só link")
+    if (App.prospectFilter === "site-fraco" && !(!p.site && p.siteFraco)) return false; // só link
     if (App.prospectQuery && !p.nome.toLowerCase().includes(App.prospectQuery.toLowerCase())) return false;
     return true;
   });
 
   empty.hidden = App.prospects.length > 0;
+  if (!App.prospects.length) {
+    empty.innerHTML = App.searched
+      ? `<p>Nenhum negócio com esses filtros. Tente outra <b>cidade</b> ou deixe o filtro em <b>“Todos os negócios”</b>. <br><span style="color:var(--text-3)">(muitos nichos já têm site — o filtro de <b>site ruim</b> por velocidade/SEO chega com a medição do PageSpeed, a próxima etapa.)</span></p>`
+      : `<p>Nenhum prospect ainda. Rode uma busca em <b>Nova busca</b>.</p>`;
+  }
   list.innerHTML = items.map(cardProspect).join("");
 
   // resumo dos resultados (igual à "cara" do MIRA)
@@ -284,12 +290,12 @@ function renderProspects() {
     else {
       summary.hidden = false;
       const comTel  = all.filter(p => p.telefone).length;
-      const refazer = all.filter(p => p.site).length;
-      const semSite = all.filter(p => !p.site).length;
+      const fracos  = all.filter(p => !p.site && p.siteFraco).length;
+      const semSite = all.filter(p => !p.site && !p.siteFraco).length;
       summary.innerHTML = `
         <span class="rs__item"><b>${all.length}</b> negócios</span>
         <span class="rs__item"><b>${comTel}</b> com telefone</span>
-        <span class="rs__item rs__item--warn"><b>${refazer}</b> com site</span>
+        <span class="rs__item rs__item--warn"><b>${fracos}</b> só link</span>
         <span class="rs__item rs__item--bad"><b>${semSite}</b> sem site</span>`;
     }
   }
@@ -301,19 +307,18 @@ function renderProspects() {
 
 function cardProspect(p) {
   const inCrm = !!App.crm[p.id];
-  // sem site = oportunidade clara; com site = "a medir" até rodar o PageSpeed
-  const siteTag = !p.site
-    ? `<span class="tag tag--bad">Sem site</span>`
-    : (hasScore(p)
-        ? `<span class="tag tag--warn">Site ruim</span>`
-        : `<span class="tag tag--src">Com site</span>`);
+  const fraco = !p.site && !!p.siteFraco;   // só link (WhatsApp/Linktree) = oportunidade
+  // sem site / site fraco = oportunidade; com site = "a medir" até rodar o PageSpeed
+  const siteTag = p.site
+    ? (hasScore(p) ? `<span class="tag tag--warn">Site ruim</span>` : `<span class="tag tag--src">Com site</span>`)
+    : (fraco ? `<span class="tag tag--warn">Site fraco</span>` : `<span class="tag tag--bad">Sem site</span>`);
   const srcTag = `<span class="tag tag--src">${FONTES[p.fonte] || "Maps"}</span>`;
   const crmTag = inCrm ? `<span class="tag tag--good">No CRM</span>` : "";
 
-  // bloco do score: número (medido) · "–" + "sem site" · "–" + "a medir"
-  const sc = !p.site ? "bad" : (hasScore(p) ? scoreClass(p.siteScore) : "na");
+  // bloco do score
+  const sc = p.site ? (hasScore(p) ? scoreClass(p.siteScore) : "na") : (fraco ? "warn" : "bad");
   const scoreNum = (p.site && hasScore(p)) ? p.siteScore : "–";
-  const scoreLbl = !p.site ? "sem site" : (hasScore(p) ? "site" : "a medir");
+  const scoreLbl = p.site ? (hasScore(p) ? "site" : "a medir") : (fraco ? "só link" : "sem site");
 
   const nota = notaStr(p);
   const avalTxt = nota ? `★ ${nota} · ${p.avaliacoes} aval.` : (p.avaliacoes ? `${p.avaliacoes} aval.` : "sem avaliações");
@@ -326,7 +331,7 @@ function cardProspect(p) {
         <span>${p.categoria}</span>
         <span>${avalTxt}</span>
         <span>${p.telefone || "sem telefone"}</span>
-        <span>${p.site || "sem site"}</span>
+        <span>${p.site || (fraco ? "só link (WhatsApp/Linktree)" : "sem site")}</span>
       </div>
     </div>
     <div class="prospect__right">
@@ -401,12 +406,15 @@ function openDrawer(id) {
       <div class="diag">${diagRows}</div>`;
   } else {
     // dados reais do Google: o site ainda não foi medido (PageSpeed = próxima etapa)
+    const fraco = !p.site && p.siteFraco;
     diagnosticoHtml = `
       <div class="section-label">Diagnóstico do site</div>
       <div class="diag-pending">
         ${p.site
           ? `Site encontrado: <a href="${site}" target="_blank" rel="noopener">${p.site.replace(/^https?:\/\//, "")}</a>.<br>A medição de velocidade, SEO e mobile (o “hoje × depois”) entra na próxima etapa.`
-          : `Este negócio <b>não tem site</b> — oportunidade clara pra criar um do zero. 🎯`}
+          : (fraco
+              ? `Este negócio <b>não tem site de verdade</b> — só um link (<a href="${p.siteFraco}" target="_blank" rel="noopener">${p.siteFraco.replace(/^https?:\/\//, "").slice(0, 40)}…</a>). Oportunidade clara pra criar um site profissional. 🎯`
+              : `Este negócio <b>não tem site</b> — oportunidade clara pra criar um do zero. 🎯`)}
       </div>`;
   }
 

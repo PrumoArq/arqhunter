@@ -31,6 +31,12 @@ const FIELD_MASK = [
   "places.primaryTypeDisplayName"
 ].join(",");
 
+// "site falso": quando o Google devolve como site um link de WhatsApp, rede
+// social ou agregador de links (Linktree etc.) — não é site de verdade, então
+// pra prospecção isso conta como OPORTUNIDADE (sem site real).
+const SITE_FALSO = /(wa\.me|whatsapp\.com|instagram\.com|facebook\.com|fb\.com|fb\.me|linktr\.ee|linktree|bio\.link|beacons\.ai|linkme\.bio|about\.me|t\.me|telegram\.me|linkbio|campsite\.bio|flowpage|solo\.to)/i;
+const siteEhReal = (url) => !!url && !SITE_FALSO.test(url);
+
 // telefone -> só dígitos, com DDI do Brasil, pra montar link de WhatsApp
 function soDigitosWhats(tel) {
   if (!tel) return null;
@@ -80,6 +86,8 @@ export default async function handler(req, res) {
     const places = Array.isArray(data.places) ? data.places : [];
     let prospects = places.map(p => {
       const tel = p.nationalPhoneNumber || p.internationalPhoneNumber || null;
+      const rawSite = p.websiteUri || null;
+      const real = siteEhReal(rawSite);
       return {
         id:         p.id,
         nome:       (p.displayName && p.displayName.text) || "(sem nome)",
@@ -88,20 +96,21 @@ export default async function handler(req, res) {
         endereco:   p.formattedAddress || "",
         telefone:   tel,
         whatsapp:   soDigitosWhats(tel),
-        instagram:  null,                 // o Google não fornece Instagram
-        site:       p.websiteUri || null, // null = negócio SEM site
+        instagram:  null,                       // o Google não fornece Instagram
+        site:       real ? rawSite : null,      // só site de VERDADE aqui (null = oportunidade)
+        siteFraco:  (!real && rawSite) ? rawSite : null, // só link (WhatsApp/Linktree) = oportunidade
         notaGoogle: (typeof p.rating === "number") ? p.rating : null,
         avaliacoes: p.userRatingCount || 0,
         mapsUrl:    p.googleMapsUri || null,
         fonte:      "maps",
-        siteScore:  null,                 // a medir (PageSpeed, próxima etapa)
+        siteScore:  null,                       // a medir (PageSpeed, próxima etapa)
         diagnostico: []
       };
     });
 
-    // Filtro. Como o "score do site" ainda não é medido aqui, "sem-site" e
-    // "precisa" focam em quem NÃO tem site (o site ruim entra quando houver
-    // medição de PageSpeed). "todos" devolve tudo.
+    // Filtro. O "score do site" ainda não é medido aqui (PageSpeed = próxima
+    // etapa), então "sem-site"/"precisa" focam em quem NÃO tem site REAL — o que
+    // já inclui quem só tem link de WhatsApp/Linktree (oportunidade). "todos" = tudo.
     if (filtro === "sem-site" || filtro === "precisa") {
       prospects = prospects.filter(p => !p.site);
     }

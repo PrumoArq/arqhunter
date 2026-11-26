@@ -96,9 +96,8 @@
             <label class="field">
               <span class="field__label">Filtro</span>
               <select class="field__input" name="filtro">
-                <option value="todos">Todos os negócios</option>
-                <option value="precisa" selected>Só quem precisa de mim (site ruim / sem site)</option>
-                <option value="sem-site">Só quem está sem site</option>
+                <option value="todos" selected>Todos os negócios</option>
+                <option value="sem-site">Sem site de verdade (ou só link: WhatsApp, Linktree…)</option>
               </select>
             </label>
             <div class="field"></div>
@@ -134,8 +133,7 @@
         <div class="toolbar__filters">
           <button class="filter is-active" data-filter="todos">Todos</button>
           <button class="filter" data-filter="sem-site">Sem site</button>
-          <button class="filter" data-filter="site-ruim">Site ruim</button>
-          <button class="filter" data-filter="instagram">Via Instagram</button>
+          <button class="filter" data-filter="site-fraco">Só link (fraco)</button>
         </div>
         <input class="search-input" id="prospectSearch" placeholder="Filtrar por nome…" />
       </div>
