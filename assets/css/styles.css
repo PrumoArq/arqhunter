@@ -490,3 +490,64 @@ body.is-locked .app { display: none; }
 
 /* divisor dentro da seção de referência/prévia */
 .siteref__div{height:1px;background:var(--border);margin:6px 0 2px}
+
+/* ============ DRAWER v2 — topo (score+insight), CRM rápido, abas ============ */
+/* score grande no topo + resumo de 1 linha */
+.lead-top { display: flex; gap: 14px; align-items: center; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg); margin-bottom: 16px; }
+.score--lg .score__num { font-size: 34px; }
+.score--xl .score__num { font-size: 46px; }
+.score--lg, .score--xl { min-width: 64px; }
+.score--na .score__num { color: var(--text-3); }
+.lead-top__right { flex: 1; min-width: 0; }
+.lead-insight { font-size: 13.5px; color: var(--ink); line-height: 1.45; font-weight: 600; }
+.lead-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.lead-link { font-size: 12px; font-weight: 600; color: var(--text-2); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--pill); padding: 4px 10px; cursor: pointer; }
+.lead-link:hover { border-color: var(--text-3); color: var(--ink); }
+
+/* CRM rápido: etapa + próximo contato lado a lado */
+.crm-quick { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.field--half { display: flex; flex-direction: column; gap: 6px; }
+.crm-quick .field__label { margin-bottom: 2px; }
+.chips-row { display: flex; gap: 6px; margin-top: 2px; }
+.datechip { font-size: 11.5px; font-weight: 700; color: var(--text-2); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--pill); padding: 4px 9px; cursor: pointer; }
+.datechip:hover { border-color: var(--brand); color: var(--brand-2); }
+.datechip.is-on { background: var(--brand-soft); border-color: var(--brand); color: var(--brand-2); }
+#notas { resize: vertical; min-height: 44px; font-family: inherit; }
+
+/* abas do detalhe */
+.lead-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin: 18px 0 16px; }
+.lead-tab { background: transparent; border: 0; border-bottom: 2px solid transparent; color: var(--text-3); font-size: 13.5px; font-weight: 700; padding: 8px 12px; cursor: pointer; margin-bottom: -1px; }
+.lead-tab:hover { color: var(--text-2); }
+.lead-tab.is-active { color: var(--ink); border-bottom-color: var(--brand); }
+.lead-panel { display: none; }
+.lead-panel.is-active { display: block; animation: fadein .18s ease; }
+@keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* aba Mensagem */
+.owner-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.owner-row .field__input { flex: 1; }
+.connector-hint { font-size: 12px; color: var(--text-3); line-height: 1.45; margin: 0 0 10px; }
+.connector-hint b { color: var(--text-2); }
+.actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.actions-grid .btn { width: 100%; justify-content: center; }
+.btn--wa { background: #25d366; border-color: #25d366; color: #07321a; }
+.btn--wa:hover { background: #1fb457; border-color: #1fb457; }
+.btn--claude { background: #e9e2ff; border-color: #d9ccff; color: #5a3ec8; grid-column: 1 / -1; }
+.btn--claude:hover { background: #ddd0ff; border-color: #c9b6ff; }
+.btn--claude small { font-weight: 600; opacity: .72; font-size: 11px; margin-left: 2px; }
+.btn--danger { color: #c23b3b; border-color: transparent; background: #fde8e8; }
+.btn--danger:hover { background: #fbd5d5; border-color: transparent; }
+
+/* aba Score */
+.score-detail { display: flex; align-items: center; gap: 18px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg); }
+.score-detail__txt { font-size: 14px; font-weight: 600; color: var(--ink); margin: 0 0 4px; line-height: 1.45; }
+.score-detail .muted { font-size: 12.5px; color: var(--text-3); margin: 0; }
+
+/* rodapé do detalhe */
+.drawer__foot { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
+.foot-row { display: flex; justify-content: space-between; gap: 8px; }
+
+@media (max-width: 540px) {
+  .crm-quick { grid-template-columns: 1fr; }
+  .actions-grid { grid-template-columns: 1fr; }
+}

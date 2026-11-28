@@ -70,7 +70,7 @@
       submit.textContent = "Criar conta";
       toggle.innerHTML   = "Já tem conta? <b>Entrar</b>";
     } else {
-      title.textContent  = "Entrar no ARQHunter";
+      title.textContent  = "Entrar no skadi";
       sub.textContent    = "Acesse sua operação de prospecção.";
       submit.textContent = "Entrar";
       toggle.innerHTML   = "Ainda não tem conta? <b>Criar conta</b>";

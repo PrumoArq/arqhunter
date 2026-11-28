@@ -17,3 +17,7 @@ node_modules/
 
 # Ferramentas internas do Claude Code (não vai pro deploy; backup pelo Google Drive)
 .claude/
+
+# Fontes da marca (PSD/PNG pesados) — ficam no Google Drive, fora do deploy.
+# Os SVGs usados no app estão em assets/img/.
+Logotipo/

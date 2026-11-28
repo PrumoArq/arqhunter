@@ -114,83 +114,115 @@ function renderDashboard() {
   const taxaResposta    = pct(responderam, contatados);
   const taxaConvertidos = pct(c.fechado, noCrm);
 
-  const flat = [1,1,1,1,1,1,1]; // sem histórico ainda → linha neutra (decorativa)
-  const stats = [
-    { label: "Prospects na semana", num: String(prospectsWeek), chart: svgSpark(flat, "#fff"),   box: "dark"  },
-    { label: "No CRM",              num: String(noCrm),         chart: svgSpark(flat, "#16d1b4"), box: "mint"  },
-    { label: "Taxa de resposta",    num: taxaResposta,          chart: svgSpark(flat, "#6366f1"), box: "blue"  },
-    { label: "Taxa de convertidos", num: taxaConvertidos,       chart: svgSpark(flat, "#16d1b4"), box: "plain" }
-  ];
-  const statCards = stats.map(s => `
-    <div class="stat">
-      <div class="stat__top"><div class="stat__icon">◴</div><div class="stat__label">${s.label}</div></div>
-      <div class="stat__row2">
-        <div class="stat__num">${s.num}</div>
-      </div>
-      <div class="stat__chart stat__chart--${s.box}">${s.chart}</div>
-    </div>`).join("");
+  // medidor circular (meta da semana) — dial 3D com ticks + ponto de luz
+  const META = 50;
+  const p = Math.min(1, prospectsWeek / META);
+  const pctGoal = Math.round(p * 100);
+  const C = 603.19;                         // circunferência (2π·96)
+  const arcOff = (C * (1 - p)).toFixed(1);
+  let gaugeTicks = "";
+  for (let i = 0; i < 60; i++) {
+    const a = (-90 + i * 6) * Math.PI / 180;
+    const on = (i / 60) <= p;
+    const r1 = on ? 101 : 104, r2 = 113;
+    const x1 = (120 + r1 * Math.cos(a)).toFixed(1), y1 = (120 + r1 * Math.sin(a)).toFixed(1);
+    const x2 = (120 + r2 * Math.cos(a)).toFixed(1), y2 = (120 + r2 * Math.sin(a)).toFixed(1);
+    gaugeTicks += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${on ? "#8ab4ff" : "currentColor"}" stroke-width="${on ? 2.3 : 1.4}" opacity="${on ? .95 : .22}" stroke-linecap="round"/>`;
+  }
+  const ha = (-90 + p * 360) * Math.PI / 180;
+  const hx = (120 + 96 * Math.cos(ha)).toFixed(1);
+  const hy = (120 + 96 * Math.sin(ha)).toFixed(1);
 
   // funil do pipeline (real)
   const pipe = [
     { label: "Novos", v: c.novo }, { label: "Diagnosticados", v: c.diagnostico }, { label: "Abordados", v: c.abordado },
     { label: "Em conversa", v: c.conversa }, { label: "Follow-up", v: c.followup }, { label: "Fechados", v: c.fechado }
   ];
-  const pipeMax = Math.max(1, ...pipe.map(p => p.v));
+  const pipeMax = Math.max(1, ...pipe.map(x => x.v));
   const pipeInner = noCrm === 0
     ? `<div class="dash-empty">Seu funil aparece aqui quando você mandar prospects pro CRM.</div>`
-    : pipe.map(p => `
-      <div class="pipe__row">
-        <span class="pipe__label">${p.label}</span>
-        <span class="pipe__bar"><span style="width:${(p.v / pipeMax * 100).toFixed(0)}%"></span></span>
-        <span class="pipe__val">${p.v}</span>
+    : pipe.map(x => `
+      <div class="pipe2__row">
+        <span class="pipe2__label">${x.label}</span>
+        <span class="pipe2__track"><span class="pipe2__fill" style="width:${(x.v / pipeMax * 100).toFixed(0)}%"></span></span>
+        <span class="pipe2__val">${x.v}</span>
       </div>`).join("");
 
   // últimos prospects (reais, da busca atual)
   const recentInner = prospectsWeek === 0
     ? `<div class="dash-empty">Nenhum prospect ainda. Rode uma busca em <b>Nova busca</b>.</div>`
-    : App.prospects.slice(0, 5).map(p => `
-      <div class="mini-list__row">
-        <span class="mini-list__dot diag__dot--${p.site ? "warn" : "bad"}"></span>
+    : App.prospects.slice(0, 5).map(x => `
+      <div class="rec__row">
+        <span class="rec__dot" style="background:${x.site ? "var(--warn)" : "var(--bad)"}"></span>
         <div>
-          <div class="mini-list__name">${p.nome}</div>
-          <div class="mini-list__cat">${p.categoria} · ${(p.cidade || "").split("—")[0].trim()}</div>
+          <div class="rec__name">${x.nome}</div>
+          <div class="rec__cat">${x.categoria} · ${(x.cidade || "").split("—")[0].trim()}</div>
         </div>
-        <span class="mini-list__meta" style="color:${p.site ? "var(--warn)" : "var(--bad)"}">${p.site ? (hasScore(p) ? p.siteScore + "/100" : "a medir") : "sem site"}</span>
+        <span class="rec__meta" style="color:${x.site ? "var(--warn)" : "var(--bad)"}">${x.site ? (hasScore(x) ? x.siteScore + "/100" : "a medir") : "sem site"}</span>
       </div>`).join("");
 
   root.innerHTML = `
-    <div class="stat-row">${statCards}</div>
-
-    <div class="dash-cols">
-      <div class="dash-card">
-        <div class="dash-card__head">
-          <span class="dash-card__title">Prospecções — últimos 7 dias</span>
+    <div class="dash2">
+      <div class="nm-tile hero-tile">
+        <div class="gauge">
+          <div class="gauge__bezel"></div>
+          <svg viewBox="0 0 240 240" aria-hidden="true">
+            <defs>
+              <linearGradient id="gaugeg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#d44afe"/><stop offset="1" stop-color="#002fff"/>
+              </linearGradient>
+              <filter id="gaugeglow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <g class="gauge__ticks">${gaugeTicks}</g>
+            <circle class="gauge__track" cx="120" cy="120" r="96"/>
+            <circle class="gauge__arc" cx="120" cy="120" r="96" stroke="url(#gaugeg)" filter="url(#gaugeglow)"
+                    stroke-dasharray="${C}" stroke-dashoffset="${arcOff}" transform="rotate(-90 120 120)"/>
+            ${p > 0 ? `<circle class="gauge__handle" cx="${hx}" cy="${hy}" r="7" filter="url(#gaugeglow)"/>` : ""}
+          </svg>
+          <div class="gauge__disc">
+            <div class="gauge__num">${prospectsWeek}</div>
+            <div class="gauge__lbl">prospects<br>esta semana</div>
+          </div>
         </div>
-        <div class="dash-empty">Sua atividade dos últimos 7 dias aparece aqui conforme você usar o ARQHunter.</div>
-      </div>
-      <div class="dash-card">
-        <div class="dash-card__head"><span class="dash-card__title">Funil do pipeline</span></div>
-        <div class="pipe">${pipeInner}</div>
-      </div>
-    </div>
-
-    <div class="dash-cols">
-      <div class="dash-card">
-        <div class="dash-card__head">
-          <span class="dash-card__title">Últimos prospects</span>
-          <span class="dash-card__hint" id="dashSeeAll" style="cursor:pointer;color:var(--indigo)">ver todos ↗</span>
+        <div class="hero-side">
+          <div class="hero-side__cap">Meta da semana</div>
+          <div class="hero-side__big">${pctGoal}%</div>
+          <div class="hero-side__sub">${prospectsWeek} de ${META} prospects</div>
+          <button class="btn btn--primary btn--sm" id="dashNewSearch">Nova busca</button>
         </div>
-        <div class="mini-list">${recentInner}</div>
       </div>
-      <div class="cta-card">
-        <div class="cta-card__title">Rode a busca do dia</div>
-        <div class="cta-card__text">30 minutos por dia é o que separa quem espera indicação de quem escolhe cliente. Comece agora.</div>
-        <button class="btn btn--sm" id="dashNewSearch">Nova busca</button>
+
+      <div class="bento">
+        <div class="nm-tile stat2"><div class="stat2__ico">▦</div><div class="stat2__num">${noCrm}</div><div class="stat2__lbl">No CRM</div></div>
+        <div class="nm-tile stat2"><div class="stat2__ico">↩</div><div class="stat2__num">${taxaResposta}</div><div class="stat2__lbl">Taxa de resposta</div></div>
+        <div class="nm-tile stat2"><div class="stat2__ico">✓</div><div class="stat2__num">${taxaConvertidos}</div><div class="stat2__lbl">Taxa de convertidos</div></div>
+      </div>
+
+      <div class="dash2-cols">
+        <div class="nm-tile">
+          <div class="tile__head">Funil do pipeline</div>
+          <div class="pipe2">${pipeInner}</div>
+        </div>
+        <div class="nm-tile">
+          <div class="tile__head">Últimos prospects <span id="dashSeeAll">ver todos ↗</span></div>
+          <div class="rec">${recentInner}</div>
+        </div>
+      </div>
+
+      <div class="nm-tile cta-tile">
+        <div>
+          <div class="cta-tile__title">Rode a busca do dia</div>
+          <div class="cta-tile__text">30 minutos por dia é o que separa quem espera indicação de quem escolhe cliente.</div>
+        </div>
+        <button class="btn" id="dashNewSearch2">Nova busca</button>
       </div>
     </div>
   `;
 
   $("#dashNewSearch")?.addEventListener("click", () => setView("busca"));
+  $("#dashNewSearch2")?.addEventListener("click", () => setView("busca"));
   $("#dashSeeAll")?.addEventListener("click", () => setView("prospects"));
 }
 
@@ -370,6 +402,58 @@ function improvedValue(nome) {
   return map[nome] || "Resolvido";
 }
 
+/* Resumo de uma linha do lead (por que vale a pena), estilo Escute. */
+function leadInsight(p) {
+  const nota = notaStr(p);
+  const aval = p.avaliacoes || 0;
+  const social = aval >= 100
+    ? `tem ${aval} avaliações${nota ? ` (${nota}★)` : ""} — cliente não falta`
+    : (aval ? `tem ${aval} avaliações${nota ? ` (${nota}★)` : ""}` : "ainda tem poucas avaliações");
+  let site;
+  if (!p.site) site = p.siteFraco ? "não tem site de verdade (só um link)" : "não tem site";
+  else if (hasScore(p)) site = p.siteScore < 50 ? `site lento/fraco (${p.siteScore}/100)`
+    : (p.siteScore < 90 ? `site dá pra melhorar (${p.siteScore}/100)` : `site bom (${p.siteScore}/100)`);
+  else site = "site ainda não medido";
+  return `${site.charAt(0).toUpperCase()}${site.slice(1)}, mas ${social}.`;
+}
+
+/* Monta um prompt pronto pra você colar numa conversa do Claude (pelo conector,
+   sem gastar a chave da API). */
+function buildClaudePrompt(p) {
+  const nota = notaStr(p);
+  const diag = (p.diagnostico || []).map(d => `${d.nome}: ${d.valor}`).join("; ");
+  return [
+    "Você é meu copiloto de prospecção (skadi). Escreva uma mensagem curta de WhatsApp pra abordar este lead — tom brasileiro, consultivo, sem parecer spam, terminando com uma pergunta pra falar com o responsável.",
+    "",
+    `Negócio: ${p.nome}`,
+    `Categoria: ${p.categoria}${p.cidade ? ` · ${p.cidade}` : ""}`,
+    `Site: ${p.site || (p.siteFraco ? `sem site de verdade (só ${p.siteFraco})` : "sem site")}${(p.site && hasScore(p)) ? ` — score ${p.siteScore}/100` : ""}`,
+    `Avaliações: ${p.avaliacoes || 0}${nota ? ` (${nota}★ no Google)` : ""}`,
+    diag ? `Diagnóstico: ${diag}` : "",
+    p.nomeDono ? `Dono: ${p.nomeDono}` : "",
+    p.anotacoes ? `Anotações: ${p.anotacoes}` : "",
+    "",
+    "Ângulo: ofereça um diagnóstico rápido + uma prévia de um site novo (mais rápido e bonito), sem compromisso."
+  ].filter(Boolean).join("\n");
+}
+
+/* Exclui o lead do CRM (memória + Supabase). */
+async function crmDelete(id) {
+  const sb = window.ARQHUNTER_SB;
+  delete App.crm[id];
+  updateCounts(); renderProspects(); renderBoard();
+  if (App.activeView === "painel") renderDashboard();
+  closeDrawer();
+  toast("Lead excluído.");
+  if (!sb) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const uid = session && session.user && session.user.id;
+    if (!uid) return;
+    await sb.from("crm_leads").delete().match({ owner: uid, ext_id: id });
+  } catch (e) { console.warn("CRM excluir:", e.message || e); }
+}
+
 /* ============ DRAWER (detalhe + abordagem) ============ */
 function openDrawer(id) {
   // procura na última busca; se não achar, pega do CRM (negócio já salvo)
@@ -400,7 +484,7 @@ function openDrawer(id) {
           <div class="compare__score">${p.site ? now : "—"}<small>/100</small></div>
         </div>
         <div class="compare__col compare__col--after">
-          <div class="compare__cap">Com o ARQHunter ${typeof p.previewScore === "number" ? "(medido)" : "(estimado)"}</div>
+          <div class="compare__cap">Com o skadi ${typeof p.previewScore === "number" ? "(medido)" : "(estimado)"}</div>
           <div class="compare__score">${proj}<small>/100</small></div>
           ${delta != null ? `<div class="compare__delta">▲ +${delta} pts</div>` : ""}
         </div>
@@ -423,37 +507,20 @@ function openDrawer(id) {
   const stage = App.crm[id]?.stage || "";
   const stageOptions = CRM_STAGES.map(s =>
     `<option value="${s.id}" ${s.id === stage ? "selected" : ""}>${s.label}</option>`).join("");
+  const inCrm = !!App.crm[id];
+  const sc = p.site ? (hasScore(p) ? scoreClass(p.siteScore) : "na") : (p.siteFraco ? "warn" : "bad");
+  const scoreNum = (p.site && hasScore(p)) ? p.siteScore : "–";
+  const scoreWord = (p.site && hasScore(p))
+    ? (p.siteScore < 50 ? "Fraco" : p.siteScore < 70 ? "Ok" : p.siteScore < 90 ? "Bom" : "Ótimo")
+    : (p.site ? "a medir" : (p.siteFraco ? "só link" : "sem site"));
+  const insight = leadInsight(p);
+  const lgC = 226.19;  // circunferência do anel (2π·36)
+  const lgPct = (p.site && hasScore(p)) ? p.siteScore / 100 : 0;
+  const lgOff = (lgC * (1 - lgPct)).toFixed(1);
 
-  $("#drawerInner").innerHTML = `
-    <div class="drawer__head">
-      <h2 class="drawer__title">${p.nome}</h2>
-      <button class="drawer__close" id="drawerClose">×</button>
-    </div>
-    <div class="drawer__meta">
-      <span>${p.categoria}${p.cidade ? " · " + p.cidade : ""}</span>
-      <span>${nota ? `★ ${nota} no Google` : "sem nota no Google"} · ${p.telefone || "sem telefone"}</span>
-      <span>${p.site ? `🌐 ${p.site}` : "Sem site"}${p.instagram ? " · " + p.instagram : ""}</span>
-    </div>
-
-    ${diagnosticoHtml}
-
-    <div class="section-label">Abordagem gerada</div>
-    <textarea class="message" id="messageBox">${generateMessage(p)}</textarea>
-    <div class="drawer__actions">
-      <button class="btn btn--sm" id="copyBtn">Copiar mensagem</button>
-      <button class="btn btn--sm btn--ghost" id="regenBtn">Gerar outra</button>
-    </div>
-
-    <div class="section-label">Contato</div>
-    <div class="drawer__actions">
-      ${p.site ? `<button class="btn btn--sm" id="openSiteBtn">Abrir site ↗</button>` : ""}
-      ${p.whatsapp ? `<button class="btn btn--sm btn--brand" id="waBtn">WhatsApp ↗</button>` : ""}
-      ${p.instagram ? `<button class="btn btn--sm" id="igBtn">Instagram ↗</button>` : ""}
-      ${p.mapsUrl ? `<button class="btn btn--sm btn--ghost" id="mapsBtn">Ver no Maps ↗</button>` : ""}
-    </div>
-
-    <div class="section-label">Referência pro site novo</div>
+  const refHtml = `
     <div class="siteref">
+      <span class="field__label">Referência pro site novo</span>
       <input class="field__input" id="refLink" placeholder="Cole um link de referência (site que você curtiu)…" value="${(p.refLink || "").replace(/"/g, "&quot;")}" />
       <div class="siteref__row">
         <label class="btn btn--sm btn--ghost" for="refFile">📎 Anexar imagem</label>
@@ -465,7 +532,7 @@ function openDrawer(id) {
       <p class="siteref__hint">Fica salvo no negócio (entra no seu CRM). Na hora de gerar o site, eu uso essa referência.</p>
 
       <div class="siteref__div"></div>
-      <span class="field__label" style="font-size:11px">Prévia do site novo</span>
+      <span class="field__label">Prévia do site novo</span>
       <input class="field__input" id="previewUrl" placeholder="Cole o link da prévia gerada (arqhunter.vercel.app/p/…)" value="${(p.previewUrl || "").replace(/"/g, "&quot;")}" />
       <button class="btn btn--sm btn--block" id="previewSaveBtn">Salvar prévia</button>
       ${p.previewUrl ? `
@@ -477,33 +544,174 @@ function openDrawer(id) {
         ? `<p class="siteref__hint">✅ Site novo: <b style="color:var(--good)">${p.previewScore}/100</b>${hasScore(p) ? ` &nbsp;·&nbsp; hoje <b>${p.siteScore}</b> → depois <b style="color:var(--good)">${p.previewScore}</b>` : ""}</p>`
         : `<p class="siteref__hint">Clique em “Medir site novo” pra preencher o “depois” real.</p>`}
       ` : ""}
+    </div>`;
+
+  $("#drawerInner").innerHTML = `
+    <div class="drawer__head">
+      <h2 class="drawer__title">${p.nome}</h2>
+      <button class="drawer__close" id="drawerClose">×</button>
+    </div>
+    <div class="drawer__meta">
+      <span>${p.categoria}${p.cidade ? " · " + p.cidade : ""}</span>
     </div>
 
-    <div class="section-label">CRM</div>
-    <div class="status-row">
-      <select class="field__input" id="stageSelect">
-        <option value="">— escolher estágio —</option>
-        ${stageOptions}
-      </select>
+    <div class="lead-top">
+      <div class="lead-gauge score--${sc}">
+        <svg viewBox="0 0 84 84" aria-hidden="true">
+          <defs>
+            <linearGradient id="lgGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#d44afe"/><stop offset="1" stop-color="#002fff"/>
+            </linearGradient>
+          </defs>
+          <circle class="lg-track" cx="42" cy="42" r="36"/>
+          <circle class="lg-arc" cx="42" cy="42" r="36" stroke="url(#lgGrad)" stroke-dasharray="${lgC}" stroke-dashoffset="${lgOff}" transform="rotate(-90 42 42)"/>
+        </svg>
+        <div class="lg-center"><b>${scoreNum}</b><small>${scoreWord}</small></div>
+      </div>
+      <div class="lead-top__right">
+        <div class="lead-insight">${insight}</div>
+        <div class="lead-links">
+          ${p.whatsapp ? `<button class="lead-link" id="waIco" type="button">🟢 WhatsApp</button>` : ""}
+          ${p.instagram ? `<button class="lead-link" id="igIco" type="button">📸 Instagram</button>` : ""}
+          ${p.site ? `<button class="lead-link" id="siteIco" type="button">🌐 Site</button>` : ""}
+          ${p.mapsUrl ? `<button class="lead-link" id="mapsIco" type="button">📍 Maps</button>` : ""}
+        </div>
+      </div>
     </div>
-    <div class="drawer__actions">
-      <button class="btn btn--primary btn--block" id="toCrmBtn">
-        ${App.crm[id] ? "Atualizar no CRM" : "Adicionar ao CRM"}
+
+    <div class="crm-quick">
+      <div class="field field--half">
+        <span class="field__label">Etapa</span>
+        <select class="field__input" id="stageSelect">
+          <option value="">— escolher —</option>
+          ${stageOptions}
+        </select>
+      </div>
+      <div class="field field--half">
+        <span class="field__label">Próximo contato</span>
+        <input class="field__input" type="date" id="proxContato" value="${p.proximoContato || ""}" />
+        <div class="chips-row">
+          <button class="datechip" data-days="1" type="button">Amanhã</button>
+          <button class="datechip" data-days="3" type="button">3 dias</button>
+          <button class="datechip" data-days="7" type="button">1 semana</button>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <span class="field__label">Anotações</span>
+      <textarea class="field__input" id="notas" rows="2" placeholder="O que o dono disse, o que ele quer, quando ligar…">${p.anotacoes || ""}</textarea>
+    </div>
+
+    <div class="lead-tabs" id="tabs">
+      <button class="lead-tab is-active" data-tab="msg" type="button">Mensagem</button>
+      <button class="lead-tab" data-tab="diag" type="button">Diagnóstico</button>
+      <button class="lead-tab" data-tab="prev" type="button">Prévia</button>
+      <button class="lead-tab" data-tab="score" type="button">Score</button>
+    </div>
+
+    <div class="lead-panel is-active" data-panel="msg">
+      <div class="owner-row">
+        <input class="field__input" id="ownerName" placeholder="Nome do dono (opcional)" value="${(p.nomeDono || "").replace(/"/g, "&quot;")}" />
+        <button class="btn btn--sm" id="ownerUseBtn" type="button">Usar</button>
+      </div>
+      <p class="connector-hint">Escreva no app ou no <b>Claude, pelo conector</b> — que <b>não gasta a sua chave</b>.</p>
+      <textarea class="message" id="messageBox">${generateMessage(p)}</textarea>
+      <div class="actions-grid">
+        ${p.whatsapp ? `<button class="btn btn--sm btn--wa" id="waSendBtn" type="button">Enviar no WhatsApp</button>` : ""}
+        <button class="btn btn--sm" id="copyBtn" type="button">Copiar</button>
+        <button class="btn btn--sm btn--claude" id="claudeBtn" type="button">✦ Escrever no Claude <small>sem usar a chave</small></button>
+        <button class="btn btn--sm btn--ghost" id="appWriteBtn" type="button">Escrever no app</button>
+      </div>
+    </div>
+
+    <div class="lead-panel" data-panel="diag">
+      ${diagnosticoHtml}
+    </div>
+
+    <div class="lead-panel" data-panel="prev">
+      ${refHtml}
+    </div>
+
+    <div class="lead-panel" data-panel="score">
+      <div class="score-detail">
+        <div class="score score--${sc} score--xl">
+          <div class="score__num">${scoreNum}</div>
+          <div class="score__label">${scoreWord}</div>
+        </div>
+        <div>
+          <p class="score-detail__txt">${insight}</p>
+          <p class="muted">${p.site ? `🌐 ${p.site}` : "Sem site"}${p.telefone ? ` · ${p.telefone}` : ""}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="drawer__foot">
+      <button class="btn btn--primary btn--block" id="toCrmBtn" type="button">
+        ${inCrm ? "Atualizar no CRM" : "Adicionar ao CRM"}
       </button>
+      <div class="foot-row">
+        <button class="btn btn--sm" id="prospectadoBtn" type="button">✓ Marcar como prospectado</button>
+        ${inCrm ? `<button class="btn btn--sm btn--danger" id="excluirBtn" type="button">🗑 Excluir lead</button>` : ""}
+      </div>
     </div>
   `;
 
   // listeners
   $("#drawerClose").addEventListener("click", closeDrawer);
+
+  // salva os campos rápidos (nome do dono, anotações, próximo contato) no lead
+  function syncQuick() {
+    p.nomeDono = ($("#ownerName")?.value || "").trim() || null;
+    p.anotacoes = ($("#notas")?.value || "") || null;
+    p.proximoContato = $("#proxContato")?.value || null;
+    if (App.crm[p.id]) { App.crm[p.id].prospect = p; crmSave(App.crm[p.id]); }
+  }
+
+  // abas (Mensagem · Diagnóstico · Prévia · Score)
+  $$("#tabs .lead-tab").forEach(t => t.addEventListener("click", () => {
+    const name = t.dataset.tab;
+    $$("#tabs .lead-tab").forEach(x => x.classList.toggle("is-active", x === t));
+    $$("#drawerInner .lead-panel").forEach(pane =>
+      pane.classList.toggle("is-active", pane.dataset.panel === name));
+  }));
+
+  // atalhos de contato (ícones do topo)
+  $("#siteIco")?.addEventListener("click", () => window.open(siteUrl(p), "_blank"));
+  $("#waIco")?.addEventListener("click", () => window.open(`https://wa.me/${p.whatsapp}`, "_blank"));
+  $("#igIco")?.addEventListener("click", () => window.open("https://instagram.com/" + p.instagram.replace("@", ""), "_blank"));
+  $("#mapsIco")?.addEventListener("click", () => window.open(p.mapsUrl, "_blank"));
+
+  // mensagem — copiar / gerar no app / levar pro Claude / personalizar com o nome
   $("#copyBtn").addEventListener("click", () => {
     navigator.clipboard?.writeText($("#messageBox").value);
     toast("Mensagem copiada.");
   });
-  $("#regenBtn").addEventListener("click", () => {
+  $("#appWriteBtn")?.addEventListener("click", () => {
     $("#messageBox").value = generateMessage(p, true);
+    toast("Nova mensagem gerada no app.");
   });
-  /* Ações de contato. TODO BACK-END: registrar no CRM que o contato foi aberto. */
-  $("#openSiteBtn")?.addEventListener("click", () => window.open(siteUrl(p), "_blank"));
+  $("#claudeBtn")?.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(buildClaudePrompt(p)); } catch (e) {}
+    window.open("https://claude.ai/new", "_blank");
+    toast("Prompt copiado — cola no Claude (sem gastar a chave). ✦");
+  });
+  $("#ownerUseBtn")?.addEventListener("click", () => {
+    p.nomeDono = ($("#ownerName").value || "").trim() || null;
+    $("#messageBox").value = generateMessage(p);
+    syncQuick();
+    toast(p.nomeDono ? "Mensagem personalizada com o nome." : "Nome removido.");
+  });
+
+  // próximo contato + anotações
+  $("#proxContato")?.addEventListener("change", syncQuick);
+  $("#notas")?.addEventListener("change", syncQuick);
+  $("#ownerName")?.addEventListener("change", syncQuick);
+  $$(".crm-quick .datechip").forEach(ch => ch.addEventListener("click", () => {
+    const d = new Date(); d.setDate(d.getDate() + Number(ch.dataset.days));
+    $("#proxContato").value = d.toISOString().slice(0, 10);
+    $$(".crm-quick .datechip").forEach(x => x.classList.toggle("is-on", x === ch));
+    syncQuick();
+  }));
   $("#medirBtn")?.addEventListener("click", async () => {
     const btn = $("#medirBtn");
     btn.disabled = true;
@@ -529,13 +737,10 @@ function openDrawer(id) {
       console.warn("medir:", e.message || e);
     }
   });
-  $("#waBtn")?.addEventListener("click", () => {
+  $("#waSendBtn")?.addEventListener("click", () => {
     const msg = encodeURIComponent($("#messageBox").value);
     window.open(`https://wa.me/${p.whatsapp}?text=${msg}`, "_blank");
   });
-  $("#igBtn")?.addEventListener("click", () =>
-    window.open("https://instagram.com/" + p.instagram.replace("@", ""), "_blank"));
-  $("#mapsBtn")?.addEventListener("click", () => window.open(p.mapsUrl, "_blank"));
   // referência pro site novo (link + imagem)
   $("#refFile")?.addEventListener("change", (e) => {
     const f = e.target.files[0];
@@ -614,8 +819,16 @@ function openDrawer(id) {
   });
 
   $("#toCrmBtn").addEventListener("click", () => {
+    syncQuick();
     const st = $("#stageSelect").value || "novo";
     addToCrm(p, st);
+  });
+  $("#prospectadoBtn")?.addEventListener("click", () => {
+    syncQuick();
+    addToCrm(p, "abordado");
+  });
+  $("#excluirBtn")?.addEventListener("click", () => {
+    if (confirm(`Excluir ${p.nome} do CRM? Isso não dá pra desfazer.`)) crmDelete(p.id);
   });
 
   $("#drawer").hidden = false;
@@ -640,9 +853,10 @@ function generateMessage(p, variant = false) {
         ? `dei uma olhada no site de vocês e encontrei alguns pontos que estão custando clientes (${pontos})`
         : "achei o site de vocês e acho que dá pra deixar ele bem mais forte — mais rápido, aparecendo melhor no Google e redondo no celular");
 
+  const saud = p.nomeDono ? `Oi, ${p.nomeDono}! ` : "Oi! ";
   const aberturas = [
-    `Oi! Encontrei a ${p.nome} aqui no ${FONTES[p.fonte] === "Instagram" ? "Instagram" : "Google"} e me chamou atenção.`,
-    `Olá! Tava procurando ${p.categoria.toLowerCase()} na região e cheguei na ${p.nome}.`
+    `${saud}Encontrei a ${p.nome} aqui no ${FONTES[p.fonte] === "Instagram" ? "Instagram" : "Google"} e me chamou atenção.`,
+    `${saud}Tava procurando ${p.categoria.toLowerCase()} na região e cheguei na ${p.nome}.`
   ];
   const abertura = aberturas[variant ? 1 : 0];
 
@@ -671,14 +885,14 @@ function buildLeadPayload(p, stage) {
     // email: não temos no protótipo — viria do enriquecimento no back-end
     company: p.nome,
     notes: [
-      "Origem: ARQHunter",
+      "Origem: skadi",
       `${p.categoria}${p.cidade ? " · " + p.cidade : ""}`,
       `Site: ${p.site || "sem site"}${(p.site && hasScore(p)) ? ` (score ${p.siteScore}/100)` : ""}`,
       p.instagram ? `Instagram: ${p.instagram}` : "",
       `Avaliações: ${p.avaliacoes}${notaStr(p) ? ` (${notaStr(p)}★)` : ""}`,
       etapa ? `Etapa: ${etapa}` : ""
     ].filter(Boolean).join(" · "),
-    source: "ARQHunter"
+    source: "skadi"
   };
 }
 

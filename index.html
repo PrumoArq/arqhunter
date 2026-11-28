@@ -3,43 +3,61 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ARQHunter — Prospecção inteligente</title>
+  <title>skadi — prospecção inteligente</title>
   <meta name="description" content="Encontre negócios com site ruim, diagnostique, gere a abordagem e acompanhe no CRM." />
-  <link rel="stylesheet" href="assets/css/styles.css" />
+  <script>/* define o tema antes da pintura pra não dar flash */(function(){try{var t=localStorage.getItem('skadi-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=sk11" />
+  <link rel="stylesheet" href="assets/css/skadi-theme.css?v=sk11" />
 </head>
 <body>
-  <div class="app">
+  <div class="layout">
 
-    <!-- ============ TOP NAV ============ -->
-    <header class="topnav">
-      <div class="brand">
-        <svg class="brand__logo" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="arqg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#1ee0c0"/><stop offset="1" stop-color="#0fb89e"/>
-            </linearGradient>
-          </defs>
-          <rect width="40" height="40" rx="11" fill="url(#arqg)"/>
-          <circle cx="20" cy="20" r="9.5" stroke="#fff" stroke-width="2.2"/>
-          <circle cx="20" cy="20" r="2.6" fill="#fff"/>
-          <path d="M20 4.5v5M20 30.5v5M4.5 20h5M30.5 20h5" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
-        </svg>
-        <div class="brand__name">ARQ<b>Hunter</b></div>
-      </div>
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar">
+      <a class="sidebar__brand" href="#" aria-label="skadi">
+        <img class="skadi-logo skadi-logo--dark" src="assets/img/skadi-logo-dark.svg" alt="skadi" width="126" height="25" />
+        <img class="skadi-logo skadi-logo--light" src="assets/img/skadi-logo-light.svg" alt="skadi" width="126" height="25" />
+      </a>
 
-      <nav class="nav">
+      <nav class="sidebar__nav">
         <button class="nav__item is-active" data-view="painel"><span class="nav__icon">◳</span> Painel</button>
         <button class="nav__item" data-view="busca"><span class="nav__icon">⌖</span> Nova busca</button>
         <button class="nav__item" data-view="prospects"><span class="nav__icon">◴</span> Prospects <span class="nav__badge" id="navProspectsCount">0</span></button>
         <button class="nav__item" data-view="crm"><span class="nav__icon">▦</span> CRM <span class="nav__badge" id="navCrmCount">0</span></button>
       </nav>
 
-      <div class="topnav__right">
-        <span class="chip chip--muted">Protótipo · dados fictícios</span>
-        <span class="whoami" id="authWhoami"></span>
+      <div class="sidebar__spacer"></div>
+
+      <div class="sidebar__card">
+        <div class="sidebar__card-top"><b>0</b> de 4 prospecções hoje</div>
+        <button class="sidebar__card-cta" data-view="busca" type="button">Começar agora <span>›</span></button>
+      </div>
+
+      <button class="sidebar__connect" id="connectMcp" type="button">
+        <span class="dot"></span> Claude / Codex <small>conectar (sem API)</small>
+      </button>
+
+      <div class="sidebar__user">
+        <div class="sidebar__avatar" id="authAvatar">U</div>
+        <span class="whoami" id="authWhoami">Você</span>
         <button class="btn btn--ghost btn--sm" id="authLogout" hidden>Sair</button>
       </div>
-    </header>
+    </aside>
+
+    <!-- ============ MAIN ============ -->
+    <main class="main">
+      <header class="topbar">
+        <span class="chip chip--muted">Protótipo · dados fictícios</span>
+        <div class="topbar__right">
+          <button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar tema" title="Alternar tema claro/escuro">
+            <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+            <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>
+          </button>
+        </div>
+      </header>
 
     <!-- ============ VIEW: PAINEL ============ -->
     <section class="view is-active" id="view-painel">
@@ -142,6 +160,7 @@
       <div class="board" id="board"></div>
     </section>
 
+    </main>
   </div>
 
   <!-- ============ DRAWER ============ -->
@@ -155,22 +174,16 @@
   <!-- ============ TELA DE LOGIN (porta de entrada) ============ -->
   <div class="auth-gate" id="authGate" hidden>
     <div class="auth-card">
+      <button class="theme-toggle" id="themeToggleAuth" type="button" aria-label="Alternar tema" title="Alternar tema claro/escuro" style="position:absolute;top:16px;right:16px">
+        <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>
+      </button>
       <div class="auth-brand">
-        <svg class="brand__logo" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="arqg2" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#1ee0c0"/><stop offset="1" stop-color="#0fb89e"/>
-            </linearGradient>
-          </defs>
-          <rect width="40" height="40" rx="11" fill="url(#arqg2)"/>
-          <circle cx="20" cy="20" r="9.5" stroke="#fff" stroke-width="2.2"/>
-          <circle cx="20" cy="20" r="2.6" fill="#fff"/>
-          <path d="M20 4.5v5M20 30.5v5M4.5 20h5M30.5 20h5" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
-        </svg>
-        <div class="brand__name">ARQ<b>Hunter</b></div>
+        <img class="skadi-logo skadi-logo--dark" src="assets/img/skadi-logo-dark.svg" alt="skadi" width="152" height="30" />
+        <img class="skadi-logo skadi-logo--light" src="assets/img/skadi-logo-light.svg" alt="skadi" width="152" height="30" />
       </div>
 
-      <h1 class="auth__title" id="authTitle">Entrar no ARQHunter</h1>
+      <h1 class="auth__title" id="authTitle">Entrar no skadi</h1>
       <p class="auth__sub" id="authSub">Acesse sua operação de prospecção.</p>
 
       <div class="auth__warn" id="authConfigWarn" hidden>
@@ -200,9 +213,30 @@
 
   <!-- cliente do Supabase (chaves públicas) + autenticação -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js"></script>
-  <script src="assets/js/data.js"></script>
-  <script src="assets/js/app.js"></script>
-  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/config.js?v=sk11"></script>
+  <script src="assets/js/data.js?v=sk11"></script>
+  <script src="assets/js/app.js?v=sk11"></script>
+  <script src="assets/js/auth.js?v=sk11"></script>
+  <script>
+    /* troca de tema (dark/light) + salva a preferência */
+    (function(){
+      var root = document.documentElement;
+      function apply(t){ root.setAttribute('data-theme', t); try{ localStorage.setItem('skadi-theme', t); }catch(e){} }
+      function toggle(){ apply(root.getAttribute('data-theme') === 'light' ? 'dark' : 'light'); }
+      ['themeToggle','themeToggleAuth'].forEach(function(id){
+        var b = document.getElementById(id);
+        if (b) b.addEventListener('click', toggle);
+      });
+      // conector MCP (Claude/Codex) — por enquanto explica o conceito
+      var mcp = document.getElementById('connectMcp');
+      if (mcp) mcp.addEventListener('click', function(){
+        if (window.toast) toast('Conector Claude / Codex via MCP — em breve. Vai gerar os sites usando seu Claude, sem gastar API.');
+      });
+      // itens do menu lateral que levam pra uma view
+      document.querySelectorAll('.sidebar__card-cta').forEach(function(b){
+        b.addEventListener('click', function(){ if (window.setView) setView(b.dataset.view); });
+      });
+    })();
+  </script>
 </body>
 </html>
