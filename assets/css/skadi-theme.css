@@ -262,8 +262,9 @@ select.field__input { background-image: none; }
   background: var(--surface); box-shadow: -5px -5px 12px var(--nm-hi), 6px 6px 16px var(--nm-lo);
   transition: transform .2s ease, box-shadow .2s ease; display: block; }
 .tpl-card:hover { transform: translateY(-5px); box-shadow: -7px -7px 18px var(--nm-hi), 9px 9px 22px var(--nm-lo); }
-.tpl-card__thumb { height: 128px; display: grid; place-items: center; }
-.tpl-card__thumb span { font-weight: 600; color: #fff; font-size: 1.1rem; text-shadow: 0 2px 10px rgba(0,0,0,.3); }
+.tpl-card__thumb { height: 172px; overflow: hidden; position: relative; background: var(--surface-2); }
+.tpl-card__thumb iframe { position: absolute; top: 0; left: 0; width: 400%; height: 2600px; border: 0; transform: scale(.25); transform-origin: top left; pointer-events: none; }
+.tpl-card__cat { position: absolute; top: 10px; left: 10px; z-index: 2; font-size: .72rem; font-weight: 600; color: #fff; background: rgba(10,11,16,.72); backdrop-filter: blur(4px); padding: .3em .72em; border-radius: 999px; }
 .tpl-card__body { padding: 18px 20px 22px; }
 .tpl-card__body h3 { color: var(--ink); font-size: 1.15rem; margin-bottom: .35rem; font-weight: 500; }
 .tpl-card__body p { color: var(--text-2); font-size: .92rem; line-height: 1.5; }
