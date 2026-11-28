@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/styles.css?v=sk11" />
-  <link rel="stylesheet" href="assets/css/skadi-theme.css?v=sk11" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=sk18" />
+  <link rel="stylesheet" href="assets/css/skadi-theme.css?v=sk18" />
 </head>
 <body>
   <div class="layout">
@@ -25,8 +25,8 @@
       <nav class="sidebar__nav">
         <button class="nav__item is-active" data-view="painel"><span class="nav__icon">◳</span> Painel</button>
         <button class="nav__item" data-view="busca"><span class="nav__icon">⌖</span> Nova busca</button>
-        <button class="nav__item" data-view="prospects"><span class="nav__icon">◴</span> Prospects <span class="nav__badge" id="navProspectsCount">0</span></button>
         <button class="nav__item" data-view="crm"><span class="nav__icon">▦</span> CRM <span class="nav__badge" id="navCrmCount">0</span></button>
+        <button class="nav__item" data-view="templates"><span class="nav__icon">▤</span> Templates</button>
       </nav>
 
       <div class="sidebar__spacer"></div>
@@ -121,21 +121,9 @@
         <p class="searching__text" id="searchingText">Conectando ao Google Maps…</p>
       </div>
 
-      <div class="panel panel--empty" id="searchHint">
-        <p>Faça uma busca para ver os negócios aparecerem aqui. Depois você analisa, gera a abordagem e manda pro CRM.</p>
-      </div>
-    </section>
-
-    <!-- ============ VIEW: PROSPECTS ============ -->
-    <section class="view" id="view-prospects">
-      <div class="page-head">
-        <h1 class="page-head__title">Prospects</h1>
-        <p class="page-head__sub">Negócios encontrados na última busca.</p>
-      </div>
-
+      <!-- resultados da busca aparecem aqui embaixo (antiga aba Prospects) -->
       <div class="results-summary" id="prospectSummary" hidden></div>
-
-      <div class="toolbar">
+      <div class="toolbar" id="prospectToolbar" hidden>
         <div class="toolbar__filters">
           <button class="filter is-active" data-filter="todos">Todos</button>
           <button class="filter" data-filter="sem-site">Sem site</button>
@@ -143,10 +131,13 @@
         </div>
         <input class="search-input" id="prospectSearch" placeholder="Filtrar por nome…" />
       </div>
-
       <div class="prospect-list" id="prospectList"></div>
-      <div class="panel panel--empty" id="prospectsEmpty">
-        <p>Nenhum prospect ainda. Rode uma busca em <b>Nova busca</b>.</p>
+      <div class="panel panel--empty" id="prospectsEmpty" hidden>
+        <p>Nenhum negócio com esses filtros. Tente outra <b>cidade</b> ou deixe o filtro em <b>“Todos os negócios”</b>.</p>
+      </div>
+
+      <div class="panel panel--empty" id="searchHint">
+        <p>Faça uma busca para ver os negócios aparecerem aqui. Depois você seleciona, gera a abordagem e manda pro CRM.</p>
       </div>
     </section>
 
@@ -158,6 +149,36 @@
       </div>
       <div class="crm-stats" id="crmStats"></div>
       <div class="board" id="board"></div>
+    </section>
+
+    <!-- ============ VIEW: TEMPLATES ============ -->
+    <section class="view" id="view-templates">
+      <div class="page-head">
+        <h1 class="page-head__title">Templates</h1>
+        <p class="page-head__sub">Modelos de site prontos por nicho — a base pra reconstruir o site do cliente, rápidos e bonitos. Clique pra abrir cada um.</p>
+      </div>
+      <div class="tpl-grid">
+        <a class="tpl-card" href="templates/arquitetura/" target="_blank" rel="noopener">
+          <div class="tpl-card__thumb" style="background:linear-gradient(135deg,#9a6a4f,#6f4733)"><span>Arquitetura</span></div>
+          <div class="tpl-card__body"><h3>Studio Lume</h3><p>Escritórios de arquitetura e design de interiores. Editorial, minimalista.</p><span class="tpl-card__open">Abrir template ↗</span></div>
+        </a>
+        <a class="tpl-card" href="templates/construtora/" target="_blank" rel="noopener">
+          <div class="tpl-card__thumb" style="background:linear-gradient(135deg,#2a2f38,#15181d)"><span>Construtora</span></div>
+          <div class="tpl-card__body"><h3>Marco Zero</h3><p>Construtoras e incorporadoras. Empreendimentos, "agende uma visita".</p><span class="tpl-card__open">Abrir template ↗</span></div>
+        </a>
+        <a class="tpl-card" href="templates/engenharia/" target="_blank" rel="noopener">
+          <div class="tpl-card__thumb" style="background:linear-gradient(135deg,#1d5fd6,#113c91)"><span>Engenharia</span></div>
+          <div class="tpl-card__body"><h3>EstruturaPro</h3><p>Projetos, laudos e gerenciamento de obra. Técnico, azul blueprint.</p><span class="tpl-card__open">Abrir template ↗</span></div>
+        </a>
+        <a class="tpl-card" href="templates/esquadrias/" target="_blank" rel="noopener">
+          <div class="tpl-card__thumb" style="background:linear-gradient(135deg,#2b3542,#151b24)"><span>Esquadrias</span></div>
+          <div class="tpl-card__body"><h3>Alumix</h3><p>Alumínio, PVC e vidro. Industrial clean, foco no produto.</p><span class="tpl-card__open">Abrir template ↗</span></div>
+        </a>
+        <a class="tpl-card" href="templates/materiais/" target="_blank" rel="noopener">
+          <div class="tpl-card__thumb" style="background:linear-gradient(135deg,#2a2a2a,#111)"><span>Materiais</span></div>
+          <div class="tpl-card__body"><h3>Casa Forte</h3><p>Lojas e depósitos de material. Comercial, categorias e ofertas.</p><span class="tpl-card__open">Abrir template ↗</span></div>
+        </a>
+      </div>
     </section>
 
     </main>
@@ -213,10 +234,10 @@
 
   <!-- cliente do Supabase (chaves públicas) + autenticação -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=sk11"></script>
-  <script src="assets/js/data.js?v=sk11"></script>
-  <script src="assets/js/app.js?v=sk11"></script>
-  <script src="assets/js/auth.js?v=sk11"></script>
+  <script src="assets/js/config.js?v=sk18"></script>
+  <script src="assets/js/data.js?v=sk18"></script>
+  <script src="assets/js/app.js?v=sk18"></script>
+  <script src="assets/js/auth.js?v=sk18"></script>
   <script>
     /* troca de tema (dark/light) + salva a preferência */
     (function(){

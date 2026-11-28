@@ -49,7 +49,7 @@ function setView(view) {
   $$(".nav__item").forEach(b => b.classList.toggle("is-active", b.dataset.view === view));
   $$(".view").forEach(v => v.classList.toggle("is-active", v.id === `view-${view}`));
   if (view === "painel") renderDashboard();
-  if (view === "prospects") renderProspects();
+  if (view === "busca") renderProspects();
   if (view === "crm") renderBoard();
 }
 
@@ -223,7 +223,7 @@ function renderDashboard() {
 
   $("#dashNewSearch")?.addEventListener("click", () => setView("busca"));
   $("#dashNewSearch2")?.addEventListener("click", () => setView("busca"));
-  $("#dashSeeAll")?.addEventListener("click", () => setView("prospects"));
+  $("#dashSeeAll")?.addEventListener("click", () => setView("busca"));
 }
 
 /* ============ BUSCA (simulada) ============ */
@@ -291,7 +291,9 @@ async function runSearch(params) {
   toast(usouDemo
     ? `Modo demonstração · ${App.prospects.length} negócios`
     : `${App.prospects.length} negócios · ${scope}`);
-  setView("prospects");
+  // resultados aparecem logo abaixo do formulário (continua na tela de busca)
+  if (App.activeView !== "busca") setView("busca");
+  renderProspects();
 }
 
 /* ============ PROSPECTS ============ */
@@ -306,11 +308,12 @@ function renderProspects() {
     return true;
   });
 
-  empty.hidden = App.prospects.length > 0;
-  if (!App.prospects.length) {
-    empty.innerHTML = App.searched
-      ? `<p>Nenhum negócio com esses filtros. Tente outra <b>cidade</b> ou deixe o filtro em <b>“Todos os negócios”</b>. <br><span style="color:var(--text-3)">(muitos nichos já têm site — o filtro de <b>site ruim</b> por velocidade/SEO chega com a medição do PageSpeed, a próxima etapa.)</span></p>`
-      : `<p>Nenhum prospect ainda. Rode uma busca em <b>Nova busca</b>.</p>`;
+  // dica inicial some depois da 1ª busca; toolbar só com resultados; "vazio" só pós-busca sem resultado
+  const hint = $("#searchHint"); if (hint) hint.hidden = App.searched;
+  const toolbar = $("#prospectToolbar"); if (toolbar) toolbar.hidden = App.prospects.length === 0;
+  empty.hidden = !(App.searched && App.prospects.length === 0);
+  if (App.searched && !App.prospects.length) {
+    empty.innerHTML = `<p>Nenhum negócio com esses filtros. Tente outra <b>cidade</b> ou deixe o filtro em <b>“Todos os negócios”</b>.</p>`;
   }
   list.innerHTML = items.map(cardProspect).join("");
 
@@ -833,10 +836,12 @@ function openDrawer(id) {
 
   $("#drawer").hidden = false;
   $("#drawerOverlay").hidden = false;
+  document.body.classList.add("has-drawer");   // reserva o espaço do painel no layout
 }
 function closeDrawer() {
   $("#drawer").hidden = true;
   $("#drawerOverlay").hidden = true;
+  document.body.classList.remove("has-drawer");
 }
 
 /* ---- gerador de abordagem (placeholder da IA) ---- */
@@ -1084,7 +1089,7 @@ function setupDragDrop() {
 
 /* ============ CONTADORES ============ */
 function updateCounts() {
-  $("#navProspectsCount").textContent = App.prospects.length;
+  const npc = $("#navProspectsCount"); if (npc) npc.textContent = App.prospects.length;
   $("#navCrmCount").textContent = Object.keys(App.crm).length;
 }
 
